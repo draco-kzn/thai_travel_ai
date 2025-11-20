@@ -3,10 +3,128 @@ from game_state import game
 from data_store import GAME_DATA
 from ai_manager import ai_bot
 
-# ==================== 1. 配置 ====================
+# ==================== 1. 全局配置 ====================
 st.set_page_config(page_title="AI 泰国穷游 Pro", page_icon="🇹🇭", layout="wide")
 
-# ==================== 2. 初始化页 (Setup) ====================
+# 准备默认背景图 (用于未开始游戏时)
+default_bg = "https://images.unsplash.com/photo-1552465011-b4e21bf6e79a?q=80&w=1200"
+
+# 获取当前游戏状态 (如果有)
+if st.session_state.get("player"):
+    player = game.data
+    current_city = player["city"]
+    city_desc = GAME_DATA[current_city]['description']
+    current_weather = player["weather"]
+    curr_h = player['time']
+    
+    # 时间段计算
+    if 5 <= curr_h < 12: time_phase, time_label, theme_color = "morning", "🌅 上午", "#4CAF50"
+    elif 12 <= curr_h < 17: time_phase, time_label, theme_color = "noon", "☀️ 下午", "#FF9800"
+    elif 17 <= curr_h < 19: time_phase, time_label, theme_color = "sunset", "🌆 黄昏", "#9C27B0"
+    else: time_phase, time_label, theme_color = "night", "🌙 夜晚", "#2196F3"
+
+    # 背景图逻辑 (带死锁)
+    current_state_key = f"{current_city}_{current_weather}_{time_phase}"
+    if "bg_image_url" not in st.session_state: st.session_state.bg_image_url = ""
+    if "bg_state_key" not in st.session_state: st.session_state.bg_state_key = ""
+
+    if st.session_state.bg_state_key != current_state_key:
+        with st.spinner(f"AI 正在绘制场景: {current_city} ({time_label})..."):
+            new_image_url = ai_bot.generate_city_card(current_city, city_desc, current_weather, time_phase)
+            st.session_state.bg_image_url = new_image_url
+            st.session_state.bg_state_key = current_state_key
+    
+    bg_image = st.session_state.bg_image_url
+    bgm_url = ai_bot.get_bgm(current_city)
+else:
+    # 游戏未开始时的默认值
+    bg_image = default_bg
+    theme_color = "#4CAF50"
+    curr_h = 10
+
+# ==================== 2. 沉浸式 CSS (含规则弹窗) ====================
+st.markdown(f"""
+<style>
+    /* 全屏背景 */
+    .stApp {{
+        background-image: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.6)), url("{bg_image}");
+        background-size: cover;
+        background-position: center;
+        background-attachment: fixed;
+        background-repeat: no-repeat;
+        transition: background-image 0.5s ease-in-out;
+    }}
+    /* 隐藏 Header */
+    header[data-testid="stHeader"] {{ background: transparent !important; visibility: hidden; }}
+    [data-testid="stDecoration"] {{ display: none; }}
+    
+    /* 布局调整 */
+    .block-container {{ padding-top: 1rem !important; padding-bottom: 2rem !important; }}
+    [data-testid="stSidebar"] {{ background-color: rgba(0, 0, 0, 0.85); border-right: 1px solid rgba(255,255,255,0.1); margin-top: 0 !important; }}
+    
+    /* 文字与按钮 */
+    h1, h2, h3, h4, p, span, div, label, .stMarkdown {{ color: white !important; text-shadow: 0 2px 4px rgba(0,0,0,0.8); }}
+    h1 {{ margin-top: 0 !important; padding-top: 0 !important; }}
+    .stButton>button {{
+        background: rgba(255, 255, 255, 0.15) !important; color: white !important;
+        border: 1px solid rgba(255,255,255,0.4) !important; backdrop-filter: blur(5px); border-radius: 12px;
+    }}
+    .stButton>button:hover {{ background: rgba(255, 255, 255, 0.35) !important; border-color: white !important; transform: scale(1.02); }}
+    [data-testid="stVerticalBlock"] > div {{ background-color: transparent !important; border: none !important; }}
+
+    /* 时间胶囊 */
+    .time-capsule {{
+        background-color: rgba(0,0,0,0.6); border-left: 5px solid {theme_color};
+        padding: 10px 20px; border-radius: 10px; display: inline-block; text-align: right; backdrop-filter: blur(5px); float: right;
+    }}
+    .time-big {{ font-size: 32px; font-weight: bold; font-family: monospace; line-height: 1; color: {theme_color} !important; text-shadow: none !important; }}
+    .time-small {{ font-size: 14px; color: #ddd !important; margin-top: 5px; }}
+
+    /* === 规则弹窗样式 === */
+    .rules-card {{
+        background: rgba(0, 0, 0, 0.85);
+        border: 1px solid rgba(255,255,255,0.2);
+        border-radius: 20px;
+        padding: 40px;
+        margin: 10vh auto;
+        max-width: 600px;
+        text-align: center;
+        backdrop-filter: blur(10px);
+        box-shadow: 0 20px 50px rgba(0,0,0,0.8);
+    }}
+    .rules-title {{ font-size: 32px; margin-bottom: 20px; color: #FF9800 !important; }}
+    .rules-list {{ text-align: left; font-size: 18px; line-height: 1.8; margin-bottom: 30px; }}
+</style>
+""", unsafe_allow_html=True)
+
+# ==================== 3. 规则拦截逻辑 (新增) ====================
+if "rules_accepted" not in st.session_state:
+    st.session_state["rules_accepted"] = False
+
+if not st.session_state["rules_accepted"]:
+    st.markdown("""
+    <div class="rules-card">
+        <div class="rules-title">🎒 AI 泰国穷游 · 玩法说明</div>
+        <div class="rules-list">
+            1. 🤖 <b>全 AI 生成</b>：所有背景图、天气、结局图均由 AI 实时绘制，请耐心等待生成。<br>
+            2. 💰 <b>资源管理</b>：你的预算和体力有限。没钱或累倒都会导致游戏结束。<br>
+            3. 🌙 <b>夜间禁行</b>：晚上 (18:00-08:00) 只有飞机运营，车船停运，请规划好行程。<br>
+            4. ☁️ <b>天气系统</b>：雨天行动会消耗更多体力。<br>
+            5. 🎵 <b>沉浸体验</b>：建议开启声音，享受城市背景白噪音。
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    c1, c2, c3 = st.columns([1, 1, 1])
+    with c2:
+        # 只有点击这个按钮，状态变为 True，才会显示下面的内容
+        if st.button("🚀 晓得了，开始旅程", type="primary"):
+            st.session_state["rules_accepted"] = True
+            st.rerun()
+    
+    st.stop() # 🛑 强制暂停代码，不渲染后面的内容
+
+# ==================== 4. 游戏初始化设置 ====================
 if st.session_state.get("player") is None:
     st.title("🇹🇭 AI 泰国穷游模拟器")
     st.markdown("### 🎒 自定义你的旅程")
@@ -20,162 +138,22 @@ if st.session_state.get("player") is None:
         budget = st.number_input("预算 (THB)", 5000, 100000, 30000, step=1000)
         days = st.number_input("天数", 1, 30, 5)
 
-    if st.button("🚀 开始旅程", type="primary"):
+    if st.button("🛫 起飞", type="primary"):
         with st.spinner("AI 正在准备行程数据..."):
             game.start_game(start_city, budget, start_time, days, start_month)
             st.rerun()
-    
+            
     st.divider()
     with st.expander("⚙️ API 设置 (可选)"):
         st.info("本项目依赖 **智谱 AI**。如果你有自己的 Key，请填入；否则使用公共额度。")
         key_input = st.text_input("智谱 API Key", type="password", placeholder="sk-...")
-        if key_input:
-            st.session_state["user_api_key"] = key_input
-            st.success("✅ Key 已保存")
+        if key_input: st.session_state["user_api_key"] = key_input
+
     st.stop()
 
-# ==================== 3. 核心资源获取 (时间系统升级) ====================
-player = game.data
-current_city = player["city"]
-city_desc = GAME_DATA[current_city]['description']
-current_weather = player["weather"]
-curr_h = player['time']
+# ==================== 5. 游戏主界面 ====================
 
-# --- 🕒 细化时间段逻辑 ---
-if 5 <= curr_h < 12:
-    time_phase = "morning"
-    time_label = "🌅 上午"
-    theme_color = "#4CAF50" # 绿意盎然
-elif 12 <= curr_h < 17:
-    time_phase = "noon"
-    time_label = "☀️ 下午"
-    theme_color = "#FF9800" # 烈日橙
-elif 17 <= curr_h < 19:
-    time_phase = "sunset"
-    time_label = "🌆 黄昏"
-    theme_color = "#9C27B0" # 紫霞
-else:
-    time_phase = "night"
-    time_label = "🌙 夜晚"
-    theme_color = "#2196F3" # 深蓝
-
-# --- 背景图死锁逻辑 ---
-# 注意：Key 加入了 time_phase，所以当时间从下午变黄昏，Key 会变，图会刷
-current_state_key = f"{current_city}_{current_weather}_{time_phase}"
-
-if "bg_image_url" not in st.session_state:
-    st.session_state.bg_image_url = ""
-if "bg_state_key" not in st.session_state:
-    st.session_state.bg_state_key = ""
-
-if st.session_state.bg_state_key != current_state_key:
-    with st.spinner(f"AI 正在绘制场景: {current_city} ({time_label})..."):
-        new_image_url = ai_bot.generate_city_card(current_city, city_desc, current_weather, time_phase)
-        st.session_state.bg_image_url = new_image_url
-        st.session_state.bg_state_key = current_state_key
-
-image_url = st.session_state.bg_image_url
-bgm_url = ai_bot.get_bgm(current_city)
-
-# ==================== 4. CSS 样式 (完全沉浸版) ====================
-st.markdown(f"""
-<style>
-    /* 1. 全屏背景图 */
-    .stApp {{
-        background-image: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.6)), url("{image_url}");
-        background-size: cover;
-        background-position: center;
-        background-attachment: fixed;
-        background-repeat: no-repeat;
-        transition: background-image 0.5s ease-in-out;
-    }}
-
-    /* 2. 关键修复：隐藏顶部 Header 的白底和装饰条 */
-    header[data-testid="stHeader"] {{
-        background: transparent !important; /* 背景变透明 */
-        visibility: hidden; /* 彻底隐藏 (如果想保留右上角菜单，改用 background: transparent) */
-    }}
-    
-    /* 隐藏顶部的彩色装饰线 */
-    [data-testid="stDecoration"] {{
-        display: none;
-    }}
-
-    /* 3. 暴力去除内容区顶部留白 */
-    .block-container {{
-        padding-top: 1rem !important; /* 让内容尽可能靠上 */
-        padding-bottom: 2rem !important;
-    }}
-    
-    /* 4. 侧边栏样式 */
-    [data-testid="stSidebar"] {{
-        background-color: rgba(0, 0, 0, 0.85);
-        border-right: 1px solid rgba(255,255,255,0.1);
-        margin-top: 0 !important; /* 确保侧边栏也顶头 */
-    }}
-    
-    /* 5. 全局文字白色 + 阴影 */
-    h1, h2, h3, h4, p, span, div, label, .stMarkdown {{
-        color: white !important;
-        text-shadow: 0 2px 4px rgba(0,0,0,0.8);
-    }}
-    
-    /* 针对大标题的特殊处理 */
-    h1 {{
-        margin-top: 0 !important;
-        padding-top: 0 !important;
-    }}
-
-    /* 6. 按钮玻璃态 */
-    .stButton>button {{
-        background: rgba(255, 255, 255, 0.15) !important;
-        color: white !important;
-        border: 1px solid rgba(255,255,255,0.4) !important;
-        backdrop-filter: blur(5px);
-        border-radius: 12px;
-    }}
-    .stButton>button:hover {{
-        background: rgba(255, 255, 255, 0.35) !important;
-        border-color: white !important;
-        transform: scale(1.02);
-    }}
-
-    /* 7. 去除容器背景 */
-    [data-testid="stVerticalBlock"] > div {{
-        background-color: transparent !important;
-        border: none !important;
-    }}
-    
-    /* 8. 时间胶囊样式 */
-    .time-capsule {{
-        background-color: rgba(0,0,0,0.6);
-        border-left: 5px solid {theme_color};
-        padding: 10px 20px;
-        border-radius: 10px;
-        display: inline-block;
-        text-align: right;
-        backdrop-filter: blur(5px);
-        float: right;
-    }}
-    .time-big {{
-        font-size: 32px;
-        font-weight: bold;
-        font-family: 'Courier New', monospace;
-        line-height: 1;
-        color: {theme_color} !important;
-        text-shadow: 0 0 10px {theme_color}44 !important;
-    }}
-    .time-small {{
-        font-size: 14px;
-        color: #ddd !important;
-        margin-top: 5px;
-    }}
-</style>
-""", unsafe_allow_html=True)
-
-# ==================== 5. 页面渲染 ====================
-
-# --- 顶部标题区 (时间显性化) ---
+# --- 顶部标题 ---
 c1, c2 = st.columns([2, 1])
 with c1:
     st.title(f"📍 {GAME_DATA[current_city]['name_cn']}")
@@ -184,7 +162,6 @@ with c1:
     st.info(f"{w_icon} {current_weather.capitalize()}")
 
 with c2:
-    # 使用 HTML 渲染醒目的时间胶囊
     st.markdown(f"""
     <div class="time-capsule">
         <div class="time-big">{int(curr_h):02d}:00</div>
@@ -204,15 +181,12 @@ with st.sidebar:
     auto_play = st.toggle("自动播放", value=True)
     st.audio(bgm_url, start_time=0, autoplay=auto_play, loop=True)
     st.divider()
-    with st.expander("🔑 API 设置"):
-        user_key = st.text_input("API Key", type="password", key="sidebar_api_input")
-        if user_key: st.session_state["user_api_key"] = user_key
-    st.divider()
     if st.button("🔄 重开游戏"):
         st.session_state.player = None
+        st.session_state["rules_accepted"] = False # 重置规则，让用户再看一遍
         st.rerun()
 
-# --- 核心游戏区 ---
+# --- 核心逻辑 ---
 if player["time"] == 8 and not player["hotel_settled"]:
     st.subheader("🏨 选择住宿")
     opts = game.get_hotel_options()
@@ -229,15 +203,14 @@ if player["time"] == 8 and not player["hotel_settled"]:
 
 t1, t2, t3 = st.tabs(["🎡 游玩", "🚀 移动", "🛌 休息"])
 
-with t1:
+with t1: # 游玩
     valid_acts = []
-    curr = player['time']
     for act in GAME_DATA[current_city]['activities']:
         if act['type']=='scenic' and act['id'] in player['visited_activities']: continue
         is_open = False
-        if act['type']=='scenic': is_open=(8<=curr<17)
-        elif act['type']=='night': is_open=(curr>=18)
-        else: is_open=(8<=curr<22)
+        if act['type']=='scenic': is_open=(8<=curr_h<17)
+        elif act['type']=='night': is_open=(curr_h>=18)
+        else: is_open=(8<=curr_h<22)
         if is_open: valid_acts.append(act)
     
     if not valid_acts: st.warning("暂无活动")
@@ -257,9 +230,8 @@ with t1:
                     st.rerun()
         st.markdown("---")
 
-with t2:
+with t2: # 移动
     moves = game.get_travel_choices()
-    curr_h = player['time']
     is_night = curr_h >= 18 or curr_h < 8
     if not moves: st.info("孤岛，无路可走")
     for tgt, info in moves.items():
@@ -282,13 +254,12 @@ with t2:
                     game.travel_to(tgt)
                     st.rerun()
         st.markdown("---")
-        
     if st.button("🏠 结束行程回家", type="primary"):
         game.finish_game()
         st.rerun()
 
-with t3:
-    if 6<=player['time']<18:
+with t3: # 休息
+    if 6<=curr_h<18:
         h = st.slider("午睡", 1, 4, 2)
         if st.button("睡觉"):
             game.sleep(h)
@@ -297,11 +268,9 @@ with t3:
         game.sleep(None)
         st.rerun()
 
+# ==================== 6. 游戏结束 ====================
 if player["game_over"]:
     is_success = player.get("success", False)
-    final_money = player['money']
-    visited_count = len(player['visited_activities'])
-    total_days = player['day']
     
     with st.spinner("AI 正在生成旅行纪念册..."):
         end_image_url = ai_bot.generate_ending_card(is_success, current_city)
@@ -323,7 +292,7 @@ if player["game_over"]:
             max-width: 700px;
             text-align: center;
             color: #333 !important;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.8);
         }}
         .end-card * {{ color: #333 !important; text-shadow: none !important; }}
         .memory-photo {{
@@ -350,9 +319,9 @@ if player["game_over"]:
         <h1>{"🎉 完美旅程" if is_success else "🥀 旅程结束"}</h1>
         <p style="font-size: 18px; margin: 20px 0;">“{player['fail_reason']}”</p>
         <div class="stat-grid">
-            <div><div class="stat-val">{total_days} 天</div><div>生存时间</div></div>
-            <div><div class="stat-val">{visited_count} 个</div><div>打卡地点</div></div>
-            <div><div class="stat-val">{final_money:,} ฿</div><div>剩余资金</div></div>
+            <div><div class="stat-val">{player['day']} 天</div><div>生存时间</div></div>
+            <div><div class="stat-val">{len(player['visited_activities'])} 个</div><div>打卡地点</div></div>
+            <div><div class="stat-val">{player['money']:,} ฿</div><div>剩余资金</div></div>
         </div>
     </div>
     """
@@ -362,5 +331,6 @@ if player["game_over"]:
     with c2:
         if st.button("🔄 开启新旅程", type="primary"):
             st.session_state.player = None
+            st.session_state["rules_accepted"] = False # 重置规则
             st.rerun()
     st.stop()
