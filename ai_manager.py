@@ -6,32 +6,39 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-class AIManager:
-    def __init__(self):
-        self.cache = {
-            "weather_probs": {}, 
-            "city_images": {}
-        }
-
-    def _get_client(self):
-        user_key = st.session_state.get("user_api_key", "").strip()
-        if user_key: return ZhipuAI(api_key=user_key)
+# --- 核心辅助函数：获取 ZhipuAI Client ---
+# 独立为函数，便于在 st.cache_data 修饰的函数中调用
+def get_zhipu_client():
+    """从 session_state、.env 或 secrets 中安全获取 ZhipuAI 客户端。"""
+    # 1. 优先读取用户填写的 Key
+    user_key = st.session_state.get("user_api_key", "").strip()
+    if user_key:
+        return ZhipuAI(api_key=user_key)
+    
+    # 2. 读取系统预设的 Key (本地 .env 或 Streamlit Secrets)
+    system_key = os.getenv("ZHIPUAI_API_KEY")
+    if not system_key and hasattr(st, "secrets"):
+        system_key = st.secrets.get("ZHIPUAI_API_KEY")
+            
+    if system_key:
+        return ZhipuAI(api_key=system_key)
         
-        system_key = os.getenv("ZHIPUAI_API_KEY")
-        if not system_key and hasattr(st, "secrets"):
-             system_key = st.secrets.get("ZHIPUAI_API_KEY")
-             
-        if system_key: return ZhipuAI(api_key=system_key)
-        return None
+    st.error("AI API Key 未设置。请在侧边栏输入 Key 或在部署环境中配置 ZHIPUAI_API_KEY。")
+    return None
 
-    # === 1. 天气 (不变) ===
-    def get_weather_probabilities(self, city_name, month):
-        cache_key = f"{city_name}_{month}"
-        if cache_key in self.cache["weather_probs"]:
-            return self.cache["weather_probs"][cache_key]
+class AIManager:
+    # AIManager 类现在主要作为一个封装所有 AI 服务的容器。
+    # 所有对外服务的方法都使用 Streamlit 缓存。
 
-        client = self._get_client()
-        if not client: return {"sunny": 0.7, "cloudy": 0.2, "rainy": 0.1}
+    # === 1. 天气预测 (使用 st.cache_data 缓存 1 小时) ===
+    @staticmethod
+    @st.cache_data(ttl=3600, show_spinner=False)
+    def get_weather_probabilities(city_name: str, month: int):
+        """获取指定城市和月份的天气概率，缓存 1 小时。"""
+        client = get_zhipu_client()
+        # 无 Key 时的默认返回值
+        if not client: 
+            return {"sunny": 0.7, "cloudy": 0.2, "rainy": 0.1}
 
         prompt = f"""
         判断泰国城市 {city_name} 在 {month} 月份的天气概率。
@@ -43,84 +50,98 @@ class AIManager:
                 messages=[{"role": "user", "content": prompt}],
                 temperature=0.1,
             )
+            # 安全解析 JSON (从代码块中提取)
             content = response.choices[0].message.content.replace("```json", "").replace("```", "").strip()
             return json.loads(content)
-        except:
+        except Exception as e:
+            print(f"❌ 天气预测失败: {e}")
             return {"sunny": 0.6, "cloudy": 0.3, "rainy": 0.1}
 
-    # === 2. 画图 (升级：支持 time_phase 细分) ===
-    def generate_city_card(self, city_name, city_desc, weather, time_phase):
-        """
-        time_phase: "morning", "noon", "sunset", "night"
-        """
-        cache_key = f"{city_name}_{weather}_{time_phase}"
-        if cache_key in self.cache["city_images"]:
-            print(f"🎯 [缓存] 使用已有图片: {city_name}")
-            return self.cache["city_images"][cache_key]
+    # === 2. AI 画图 (使用 st.cache_data 永久硬盘缓存) ===
+    @staticmethod
+    @st.cache_data(persist="disk", show_spinner=False)
+    def generate_city_card(city_name: str, city_desc: str, weather: str, time_phase: str):
+        """根据城市、天气和时间生成图片 URL，结果永久缓存。"""
+        client = get_zhipu_client()
+        default_image = "https://images.unsplash.com/photo-1552465011-b4e21bf6e79a?q=80&w=1200"
+        if not client: 
+            return default_image
 
-        client = self._get_client()
-        if not client:
-            return "https://images.unsplash.com/photo-1552465011-b4e21bf6e79a?q=80&w=1200"
+        print(f"🎨 [AI绘画] 新生成: {city_name} ({time_phase})...")
 
-        print(f"🎨 [AI绘画] 正在生成: {city_name} ({time_phase})...")
-
+        # 结合 B 版优化后的 Prompt 细节
         weather_prompt = {
-            "sunny": "sunny day, clear blue sky",
-            "cloudy": "cloudy sky, soft lighting",
-            "rainy": "raining, wet streets, umbrella"
+            "sunny": "sunny day, clear blue sky, vibrant, dynamic shadows",
+            "cloudy": "cloudy sky, soft lighting, misty atmosphere",
+            "rainy": "raining, wet streets, umbrella, strong reflections on the pavement"
         }
-        
-        # 细化时间光影
-        phase_prompts = {
-            "morning": "early morning light, soft shadows, fresh atmosphere",
-            "noon": "bright midday sun, high contrast, harsh shadows",
-            "sunset": "golden hour, sunset, orange and purple sky, dramatic lighting, silhouettes",
-            "night": "night time, dark sky, glowing neon lights, city lights"
+        time_prompt = {
+            "morning": "early morning light, soft golden glow, fresh atmosphere",
+            "noon": "bright midday sun, high contrast, vivid colors",
+            "sunset": "golden hour sunset, orange and purple sky, dramatic lighting, epic view",
+            "night": "night time, cyberpunk neon lights, glowing city signs, dark sky"
         }
         
         prompt = f"""
         Anime style landscape wallpaper of {city_name}, Thailand.
         KEY FEATURES: {city_desc}. 
-        ENVIRONMENT: {weather_prompt.get(weather)}, {phase_prompts.get(time_phase)}.
-        Makoto Shinkai style, high resolution, masterpiece, 8k.
-        No text.
+        ENVIRONMENT: {weather_prompt.get(weather)}, {time_prompt.get(time_phase, 'day')}.
+        Makoto Shinkai style, high resolution, masterpiece, 8k, wide angle.
+        No text, no watermarks.
         """
 
         try:
-            try:
+            # 兼容性调用 (新旧 SDK 通吃)
+            try: 
                 response = client.images.generations.create(model="cogview-3-plus", prompt=prompt)
-            except AttributeError:
+            except AttributeError: 
+                # 旧版 SDK 兼容
                 response = client.images.generations(model="cogview-3-plus", prompt=prompt)
             
-            if hasattr(response, 'data'): image_url = response.data[0].url
-            else: image_url = response['data'][0]['url']
-            
-            self.cache["city_images"][cache_key] = image_url
-            return image_url
-
+            # 兼容性获取 URL
+            if hasattr(response, 'data'): 
+                return response.data[0].url
+            else: 
+                return response['data'][0]['url']
+                
         except Exception as e:
             print(f"❌ 画图失败: {e}")
-            return "https://images.unsplash.com/photo-1552465011-b4e21bf6e79a?q=80&w=1200"
+            return default_image
 
-    # ... (结局图和音乐保持不变) ...
-    def generate_ending_card(self, is_success, city_name):
-        # (代码同上个版本，为了节省篇幅省略，请保留原有的逻辑)
-        cache_key = f"ending_{city_name}_{is_success}"
-        if cache_key in self.cache["city_images"]: return self.cache["city_images"][cache_key]
-        client = self._get_client()
-        if not client: return "https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?q=80&w=1200"
-        if is_success: prompt = f"Anime style, happy travel memories, Thailand passport, photos of {city_name}."
-        else: prompt = f"Anime style, sad ending, lonely figure in {city_name}, raining."
+    # === 3. 结局图 (永久缓存，更优化的 Prompt) ===
+    @staticmethod
+    @st.cache_data(persist="disk", show_spinner=False)
+    def generate_ending_card(is_success: bool, city_name: str):
+        """生成旅行结局图，永久缓存。"""
+        client = get_zhipu_client()
+        default_image = "https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?q=80&w=1200"
+        if not client: 
+            return default_image
+        
+        # 采用 B 版优化后的更细致的 Prompt
+        if is_success: 
+            prompt = f"Anime style, happy travel memories, Thailand passport, sunglasses, photos of {city_name} on wooden table, warm sunset light, cozy atmosphere, perfect journey."
+        else: 
+            prompt = f"Anime style, sad ending, lonely figure sitting on a bench in {city_name}, raining, holding empty wallet, melancholic, washed out colors."
+
         try:
-            try: response = client.images.generations.create(model="cogview-3-plus", prompt=prompt)
-            except AttributeError: response = client.images.generations(model="cogview-3-plus", prompt=prompt)
-            if hasattr(response, 'data'): url = response.data[0].url
-            else: url = response['data'][0]['url']
-            self.cache["city_images"][cache_key] = url
-            return url
-        except: return "https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?q=80&w=1200"
+            # 兼容性调用
+            try: 
+                response = client.images.generations.create(model="cogview-3-plus", prompt=prompt)
+            except AttributeError: 
+                response = client.images.generations(model="cogview-3-plus", prompt=prompt)
+            
+            if hasattr(response, 'data'): 
+                return response.data[0].url
+            else: 
+                return response['data'][0]['url']
+        except: 
+            return default_image
 
-    def get_bgm(self, city_name):
+    # === 4. BGM (静态，无需缓存) ===
+    # 作为一个实例方法，可以被外部像普通方法一样调用，或者改为静态方法。
+    def get_bgm(self, city_name: str):
+        """返回城市对应的背景音乐 URL。"""
         bgm_library = {
             "Bangkok": "https://cdn.pixabay.com/download/audio/2022/05/27/audio_1808fbf07a.mp3",
             "Chiang Mai": "https://cdn.pixabay.com/download/audio/2022/11/22/audio_febc508520.mp3",
