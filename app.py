@@ -77,9 +77,10 @@ if st.session_state.bg_state_key != current_state_key:
 image_url = st.session_state.bg_image_url
 bgm_url = ai_bot.get_bgm(current_city)
 
-# ==================== 4. CSS 样式 ====================
+# ==================== 4. CSS 样式 (完全沉浸版) ====================
 st.markdown(f"""
 <style>
+    /* 1. 全屏背景图 */
     .stApp {{
         background-image: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.6)), url("{image_url}");
         background-size: cover;
@@ -88,19 +89,44 @@ st.markdown(f"""
         background-repeat: no-repeat;
         transition: background-image 0.5s ease-in-out;
     }}
-    .block-container {{
-        padding-top: 12px !important;
-        padding-bottom: 20px !important;
+
+    /* 2. 关键修复：隐藏顶部 Header 的白底和装饰条 */
+    header[data-testid="stHeader"] {{
+        background: transparent !important; /* 背景变透明 */
+        visibility: hidden; /* 彻底隐藏 (如果想保留右上角菜单，改用 background: transparent) */
     }}
-    h1 {{ margin-top: 0 !important; padding-top: 0 !important; }}
+    
+    /* 隐藏顶部的彩色装饰线 */
+    [data-testid="stDecoration"] {{
+        display: none;
+    }}
+
+    /* 3. 暴力去除内容区顶部留白 */
+    .block-container {{
+        padding-top: 1rem !important; /* 让内容尽可能靠上 */
+        padding-bottom: 2rem !important;
+    }}
+    
+    /* 4. 侧边栏样式 */
     [data-testid="stSidebar"] {{
         background-color: rgba(0, 0, 0, 0.85);
         border-right: 1px solid rgba(255,255,255,0.1);
+        margin-top: 0 !important; /* 确保侧边栏也顶头 */
     }}
+    
+    /* 5. 全局文字白色 + 阴影 */
     h1, h2, h3, h4, p, span, div, label, .stMarkdown {{
         color: white !important;
         text-shadow: 0 2px 4px rgba(0,0,0,0.8);
     }}
+    
+    /* 针对大标题的特殊处理 */
+    h1 {{
+        margin-top: 0 !important;
+        padding-top: 0 !important;
+    }}
+
+    /* 6. 按钮玻璃态 */
     .stButton>button {{
         background: rgba(255, 255, 255, 0.15) !important;
         color: white !important;
@@ -113,12 +139,14 @@ st.markdown(f"""
         border-color: white !important;
         transform: scale(1.02);
     }}
+
+    /* 7. 去除容器背景 */
     [data-testid="stVerticalBlock"] > div {{
         background-color: transparent !important;
         border: none !important;
     }}
     
-    /* 时间胶囊样式 */
+    /* 8. 时间胶囊样式 */
     .time-capsule {{
         background-color: rgba(0,0,0,0.6);
         border-left: 5px solid {theme_color};
