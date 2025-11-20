@@ -62,7 +62,9 @@ if st.session_state.bg_state_key != current_state_key:
 image_url = st.session_state.bg_image_url
 bgm_url = ai_bot.get_bgm(current_city)
 
-# ==================== 4. CSS 样式 (极简+沉浸) ====================
+# ... (前面的代码保持不变)
+
+# ==================== 4. CSS 样式 (极致紧凑版) ====================
 st.markdown(f"""
 <style>
     /* 1. 全屏背景图 */
@@ -75,25 +77,32 @@ st.markdown(f"""
         transition: background-image 0.5s ease-in-out;
     }}
 
-    /* 2. 移除顶部多余留白 */
+    /* 2. 暴力去除顶部留白 (关键修改) */
     .block-container {{
-        padding-top: 2rem !important;
-        padding-bottom: 2rem !important;
+        padding-top: 12px !important; /* 压缩到极限 */
+        padding-bottom: 20px !important;
+        max-width: 100% !important;
     }}
     
-    /* 3. 侧边栏样式 */
+    /* 3. 去掉标题默认的上边距 (关键修改) */
+    h1 {{
+        margin-top: 0 !important;
+        padding-top: 0 !important;
+    }}
+    
+    /* 4. 侧边栏样式 */
     [data-testid="stSidebar"] {{
         background-color: rgba(0, 0, 0, 0.85);
         border-right: 1px solid rgba(255,255,255,0.1);
     }}
     
-    /* 4. 全局文字白色 + 阴影 */
+    /* 5. 全局文字白色 + 阴影 */
     h1, h2, h3, h4, p, span, div, label, .stMarkdown {{
         color: white !important;
         text-shadow: 0 2px 4px rgba(0,0,0,0.8);
     }}
 
-    /* 5. 按钮玻璃态 */
+    /* 6. 按钮玻璃态 */
     .stButton>button {{
         background: rgba(255, 255, 255, 0.15) !important;
         color: white !important;
@@ -107,13 +116,20 @@ st.markdown(f"""
         transform: scale(1.02);
     }}
 
-    /* 6. 去除容器背景 */
+    /* 7. 去除容器背景 */
     [data-testid="stVerticalBlock"] > div {{
         background-color: transparent !important;
         border: none !important;
     }}
+    
+    /* 8. 隐藏 Streamlit 顶部的彩色线条 (可选，为了更沉浸) */
+    header {{
+        background-color: transparent !important;
+    }}
 </style>
 """, unsafe_allow_html=True)
+
+# ... (后面的代码保持不变)
 
 # ==================== 5. 页面渲染 ====================
 
@@ -137,13 +153,26 @@ with st.sidebar:
     st.subheader(f"💰 {player['money']:,}")
     st.subheader(f"⚡ {player['stamina']}/100")
     
+# ... (前面的侧边栏代码: 背包、金钱、体力) ...
+
     st.divider()
-    st.markdown("🎵 **BGM**")
-    st.audio(bgm_url, start_time=0)
+    
+    # === 🎵 音乐播放器升级版 ===
+    st.markdown("🎵 **背景音乐**")
+    
+    # 1. 增加一个开关，默认开启 (Value=True)
+    # 这样每次页面刷新，只要这个开关开着，音乐就会自动播放
+    auto_play = st.toggle("自动播放 (Autoplay)", value=True)
+    
+    # 2. 使用 loop=True 让音乐循环播放
+    # 注意：如果用户手动暂停了，下一秒点击了别的按钮刷新页面，
+    # 只要上面的开关是开的，音乐会重新开始。这是 Streamlit 的机制限制。
+    # 所以如果想彻底安静，用户需要关掉上面的开关。
+    st.audio(bgm_url, start_time=0, autoplay=auto_play, loop=True)
     
     st.divider()
     
-    # API Key 输入框 (BYOK模式)
+    # API Key 输入框 (保持不变) ...
     with st.expander("🔑 API 设置"):
         st.caption("若生成图片失败，请填入自己的智谱 Key。")
         user_key = st.text_input("Zhipu API Key", type="password", key="sidebar_api_input")
