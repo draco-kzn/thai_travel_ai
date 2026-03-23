@@ -32,6 +32,70 @@ def activity_time_label(act):
     return f"{start_hour:02d}:00 - {latest_start:02d}:00 可出发"
 
 
+CITY_GUIDES = {
+    "Bangkok": {
+        "best_for": "寺庙、夜生活、商场、第一次到泰国",
+        "pace": "高密度都市节奏，适合打底和中转",
+        "transport_tip": "白天堵车常见，跨城更适合把出发时间留足。",
+        "signature_window": "适合 2-3 天起步，清晨寺庙、傍晚觅食、夜里逛街。",
+    },
+    "Chiang Mai": {
+        "best_for": "寺庙、咖啡馆、山路、大象营",
+        "pace": "慢节奏但活动很分散，适合住 2 天以上",
+        "transport_tip": "很多热门项目要早出发，下午更适合咖啡馆和古城散步。",
+        "signature_window": "适合 2-4 天，清晨上山、午后宁曼、夜里逛夜市。",
+    },
+    "Pattaya": {
+        "best_for": "海边娱乐、夜生活、看秀、短途放松",
+        "pace": "昼夜反差大，白天出海、晚上看秀最顺",
+        "transport_tip": "往返曼谷更像陆路短线，不需要把它当航班节点。",
+        "signature_window": "适合 1-2 天，上午海岛、晚上步行街或秀场。",
+    },
+    "Hua Hin": {
+        "best_for": "轻度度假、海边休闲、夜市、家庭向放松",
+        "pace": "更安静，适合当作喘口气的过渡站",
+        "transport_tip": "交通逻辑更接近铁路/公路城市，不适合作为常规飞行节点。",
+        "signature_window": "适合 1-2 天，白天海边，傍晚逛夜市。",
+    },
+    "Phuket": {
+        "best_for": "海滩、夜秀、老街、岛屿跳转",
+        "pace": "成熟旅游岛，白天和夜里都能排得很满",
+        "transport_tip": "它是安达曼海一侧最重要的现实网关之一。",
+        "signature_window": "适合 2-4 天，白天玩海，傍晚看日落，夜里看秀。",
+    },
+    "Krabi": {
+        "best_for": "攀岩、跳岛、自然景观",
+        "pace": "很多项目天然偏上午出发，行程规划要早",
+        "transport_tip": "对 Lanta 一类目的地来说，Krabi 是比 Phuket 更自然的网关。",
+        "signature_window": "适合 2-3 天，清晨出海或爬寺，下午回海边。",
+    },
+    "Koh Samui": {
+        "best_for": "度假、SPA、海滩、夜市",
+        "pace": "比 Phuket 更度假向，但跨区移动成本高",
+        "transport_tip": "去安达曼海一侧通常不是直线逻辑，常常要转机或联运。",
+        "signature_window": "适合 2-4 天，白天海滩和 SPA，晚上夜市或派对。",
+    },
+    "Phi Phi Islands": {
+        "best_for": "海景、潜水、火舞派对、短住打卡",
+        "pace": "小岛型节奏，关键在船班和海上活动窗口",
+        "transport_tip": "没有机场，现实交通核心永远是先到 Phuket 或 Krabi 再上船。",
+        "signature_window": "适合 1-2 天，上午出海，傍晚看景，夜里派对。",
+    },
+    "Koh Lanta": {
+        "best_for": "慢节奏海岛、自驾环岛、日落餐厅",
+        "pace": "比 Phi Phi 更松弛，适合连住",
+        "transport_tip": "没有机场，通常依赖 Krabi 网关和地面/船运接驳。",
+        "signature_window": "适合 2-3 天，白天环岛或出海，傍晚吃日落餐厅。",
+    },
+    "Koh Lipe": {
+        "best_for": "更纯粹的海水、浮潜、远离主流人流",
+        "pace": "到达成本高，适合一次住够，不适合频繁折返",
+        "transport_tip": "没有机场，现实进入方式通常是先到 Hat Yai 再车船联运。",
+        "signature_window": "适合 2-4 天，清晨看日出，白天浮潜，晚上步行街。",
+    },
+}
+
+
 GAME_DATA = {
     "Bangkok": {
         "name_cn": "曼谷",

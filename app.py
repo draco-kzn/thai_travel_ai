@@ -1,7 +1,7 @@
 import streamlit as st
 
 from ai_manager import ai_bot
-from data_store import GAME_DATA, activity_is_available, activity_time_label
+from data_store import CITY_GUIDES, GAME_DATA, activity_is_available, activity_time_label
 from game_state import game
 from travel_realtime import (
     build_realtime_flight_plan,
@@ -414,6 +414,10 @@ if st.session_state.get("player") is None:
             start_time = st.slider("落地时间", 0, 23, 10)
             budget = st.number_input("预算 (THB)", 5000, 100000, 30000, step=1000)
             days = st.number_input("天数", 1, 30, 5)
+            city_guide = CITY_GUIDES[start_city]
+            st.caption(f"适合：{city_guide['best_for']}")
+            st.caption(f"节奏：{city_guide['pace']}")
+            st.caption(f"交通提示：{city_guide['transport_tip']}")
             start_clicked = st.form_submit_button(
                 "🛫 开始我的泰国之旅", type="primary", use_container_width=True
             )
@@ -439,6 +443,13 @@ with c1:
     st.markdown(f"*{city_desc}*")
     w_icon = {"sunny": "☀️", "cloudy": "☁️", "rainy": "🌧️"}.get(current_weather, "✨")
     st.info(f"{w_icon} {current_weather.capitalize()}")
+    city_guide = CITY_GUIDES.get(current_city)
+    if city_guide:
+        with st.expander("🧭 城市情报", expanded=False):
+            st.markdown(f"**适合玩法**：{city_guide['best_for']}")
+            st.markdown(f"**旅行节奏**：{city_guide['pace']}")
+            st.markdown(f"**交通提示**：{city_guide['transport_tip']}")
+            st.markdown(f"**推荐时段**：{city_guide['signature_window']}")
 
 with c2:
     st.markdown(
