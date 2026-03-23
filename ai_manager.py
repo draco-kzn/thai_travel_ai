@@ -12,6 +12,18 @@ load_dotenv()
 DEFAULT_WEATHER_PROBS = {"sunny": 0.6, "cloudy": 0.3, "rainy": 0.1}
 DEFAULT_CITY_IMAGE = "https://images.unsplash.com/photo-1552465011-b4e21bf6e79a?q=80&w=1200"
 DEFAULT_ENDING_IMAGE = "https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?q=80&w=1200"
+CITY_FALLBACK_IMAGES = {
+    "Bangkok": "https://source.unsplash.com/1600x900/?bangkok,thailand,temple,city",
+    "Chiang Mai": "https://source.unsplash.com/1600x900/?chiang-mai,thailand,temple,mountain",
+    "Pattaya": "https://source.unsplash.com/1600x900/?pattaya,thailand,beach,city",
+    "Hua Hin": "https://source.unsplash.com/1600x900/?hua-hin,thailand,beach,resort",
+    "Phuket": "https://source.unsplash.com/1600x900/?phuket,thailand,beach,island",
+    "Krabi": "https://source.unsplash.com/1600x900/?krabi,thailand,cliff,beach",
+    "Koh Samui": "https://source.unsplash.com/1600x900/?koh-samui,thailand,island,resort",
+    "Phi Phi Islands": "https://source.unsplash.com/1600x900/?phi-phi,islands,thailand,lagoon",
+    "Koh Lanta": "https://source.unsplash.com/1600x900/?koh-lanta,thailand,beach,island",
+    "Koh Lipe": "https://source.unsplash.com/1600x900/?koh-lipe,thailand,sea,island",
+}
 
 
 def get_zhipu_client():
@@ -68,6 +80,10 @@ def _normalize_weather_probs(payload):
     return {key: value / total for key, value in normalized.items()}
 
 
+def get_city_fallback_image(city_name: str):
+    return CITY_FALLBACK_IMAGES.get(city_name, DEFAULT_CITY_IMAGE)
+
+
 class AIManager:
     @staticmethod
     @st.cache_data(ttl=3600, show_spinner=False)
@@ -97,8 +113,9 @@ class AIManager:
     @st.cache_data(persist="disk", show_spinner=False)
     def generate_city_card(city_name: str, city_desc: str, weather: str, time_phase: str):
         client = get_zhipu_client()
+        fallback_image = get_city_fallback_image(city_name)
         if not client:
-            return DEFAULT_CITY_IMAGE
+            return fallback_image
 
         weather_prompt = {
             "sunny": "sunny day, clear blue sky, vibrant, dynamic shadows",
@@ -131,7 +148,7 @@ class AIManager:
             return response["data"][0]["url"]
         except Exception as exc:
             print(f"生成城市图片失败: {exc}")
-            return DEFAULT_CITY_IMAGE
+            return fallback_image
 
     @staticmethod
     @st.cache_data(persist="disk", show_spinner=False)

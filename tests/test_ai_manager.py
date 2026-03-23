@@ -46,6 +46,26 @@ class AIManagerTests(unittest.TestCase):
 
         self.assertGreaterEqual(changed_cities, 4)
 
+    def test_city_fallback_images_are_not_all_the_same(self):
+        fallback_images = {
+            city: ai_manager.get_city_fallback_image(city)
+            for city in [
+                "Bangkok",
+                "Chiang Mai",
+                "Pattaya",
+                "Hua Hin",
+                "Phuket",
+                "Krabi",
+                "Koh Samui",
+                "Phi Phi Islands",
+                "Koh Lanta",
+                "Koh Lipe",
+            ]
+        }
+
+        self.assertEqual(len(fallback_images), 10)
+        self.assertGreaterEqual(len(set(fallback_images.values())), 10)
+
 
 if __name__ == "__main__":
     unittest.main()
