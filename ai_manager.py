@@ -23,7 +23,6 @@ def get_zhipu_client():
     if system_key:
         return ZhipuAI(api_key=system_key)
         
-    st.error("AI API Key 未设置。请在侧边栏输入 Key 或在部署环境中配置 ZHIPUAI_API_KEY。")
     return None
 
 class AIManager:

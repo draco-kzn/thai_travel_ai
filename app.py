@@ -282,7 +282,7 @@ if player["game_over"]:
     <style>
         [data-testid="stSidebar"] {{ display: none; }}
         .block-container {{ padding-top: 0 !important; }}
-        .stApp {{ background-image: linear-gradient(rgba(0,0,0,0.8), rgba(0,0,0,0.8)), url("{image_url}"); }}
+        .stApp {{ background-image: linear-gradient(rgba(0,0,0,0.8), rgba(0,0,0,0.8)), url("{end_image_url}"); }}
         
         .end-card {{
             background: rgba(255, 255, 255, 0.95);
