@@ -3,6 +3,15 @@ import streamlit as st
 from ai_manager import ai_bot
 from data_store import GAME_DATA
 from game_state import game
+from travel_realtime import (
+    format_date_for_api,
+    get_city_realtime_meta,
+    has_amadeus_credentials,
+    infer_hotel_dates,
+    infer_trip_date,
+    search_live_flights,
+    search_live_hotels,
+)
 
 
 st.set_page_config(page_title="AI 泰国穷游 Pro", page_icon="🇹🇭", layout="wide")
@@ -461,6 +470,50 @@ with st.sidebar:
 
 if player["time"] == 8 and not player["hotel_settled"]:
     st.subheader("🏨 选择住宿")
+    hotel_meta = get_city_realtime_meta(current_city)
+    hotel_check_in, hotel_check_out = infer_hotel_dates(player)
+
+    with st.expander("🏨 实时酒店参考（Beta）", expanded=False):
+        if not has_amadeus_credentials():
+            st.info("配置 `AMADEUS_API_KEY` 和 `AMADEUS_API_SECRET` 后，这里会显示当前城市附近的实时酒店参考价。")
+        elif not hotel_meta:
+            st.warning("当前城市还没有配置实时酒店查询映射。")
+        else:
+            st.caption(
+                f"{hotel_meta['hotel_label']} · {format_date_for_api(hotel_check_in)} -> "
+                f"{format_date_for_api(hotel_check_out)}"
+            )
+            if st.button("刷新实时酒店报价", key=f"live_hotel_{current_city}", use_container_width=True):
+                with st.spinner("正在查询实时酒店报价..."):
+                    st.session_state["live_hotel_results"] = search_live_hotels(
+                        current_city,
+                        hotel_meta["lat"],
+                        hotel_meta["lng"],
+                        format_date_for_api(hotel_check_in),
+                        format_date_for_api(hotel_check_out),
+                    )
+                    st.session_state["live_hotel_query"] = (
+                        f"{current_city}:{format_date_for_api(hotel_check_in)}:{format_date_for_api(hotel_check_out)}"
+                    )
+
+            hotel_query_key = f"{current_city}:{format_date_for_api(hotel_check_in)}:{format_date_for_api(hotel_check_out)}"
+            hotel_result = st.session_state.get("live_hotel_results")
+            if st.session_state.get("live_hotel_query") == hotel_query_key and hotel_result:
+                if not hotel_result["ok"]:
+                    st.warning(f"酒店查询失败：{hotel_result['error']}")
+                elif not hotel_result["data"]:
+                    st.info("当前没有拿到可展示的实时酒店报价。")
+                else:
+                    st.caption("以下是附近酒店的实时参考价，游戏内住宿价格仍按模拟规则结算。")
+                    for item in hotel_result["data"][:5]:
+                        title = f"{item['hotel_name']} · {item['price']} {item['currency']}"
+                        subtitle = item["room_type"]
+                        if item["board_type"]:
+                            subtitle = f"{subtitle} · {item['board_type']}"
+                        st.markdown(f"**{title}**")
+                        st.caption(subtitle)
+                        st.markdown("---")
+
     opts = game.get_hotel_options()
     cols = st.columns(3)
     for i, hotel in enumerate(opts):
@@ -529,6 +582,64 @@ with t2:
 
     if not moves:
         st.info("这里像一座孤岛，暂时没有可走的路线。")
+
+    with st.expander("✈️ 实时航班参考（Beta）", expanded=False):
+        if not has_amadeus_credentials():
+            st.info("配置 `AMADEUS_API_KEY` 和 `AMADEUS_API_SECRET` 后，这里会显示当前路线的实时机票参考价。")
+        elif not moves:
+            st.caption("当前城市没有可查询的移动路线。")
+        else:
+            target_options = list(moves.keys())
+            live_target = st.selectbox(
+                "选择想查看实时机票的目的地",
+                target_options,
+                format_func=lambda city: GAME_DATA[city]["name_cn"],
+                key=f"live_target_{current_city}",
+            )
+            origin_meta = get_city_realtime_meta(current_city)
+            destination_meta = get_city_realtime_meta(live_target)
+            trip_date = infer_trip_date(player["month"], player["day"])
+
+            if origin_meta and destination_meta:
+                st.caption(
+                    f"{origin_meta['airport_label']} -> {destination_meta['airport_label']} · "
+                    f"{format_date_for_api(trip_date)}"
+                )
+                st.caption(origin_meta["flight_note"])
+                if destination_meta["flight_note"] != origin_meta["flight_note"]:
+                    st.caption(destination_meta["flight_note"])
+
+                if origin_meta["airport_code"] == destination_meta["airport_code"]:
+                    st.warning("这条路线通常不是纯航班段，实时机票参考暂不适用。")
+                elif st.button("刷新实时机票", key=f"live_flight_{current_city}_{live_target}", use_container_width=True):
+                    with st.spinner("正在查询实时航班报价..."):
+                        st.session_state["live_flight_results"] = search_live_flights(
+                            origin_meta["airport_code"],
+                            destination_meta["airport_code"],
+                            format_date_for_api(trip_date),
+                        )
+                        st.session_state["live_flight_query"] = (
+                            f"{current_city}:{live_target}:{format_date_for_api(trip_date)}"
+                        )
+
+                flight_query_key = f"{current_city}:{live_target}:{format_date_for_api(trip_date)}"
+                flight_result = st.session_state.get("live_flight_results")
+                if st.session_state.get("live_flight_query") == flight_query_key and flight_result:
+                    if not flight_result["ok"]:
+                        st.warning(f"航班查询失败：{flight_result['error']}")
+                    elif not flight_result["data"]:
+                        st.info("当前没有拿到可展示的实时航班报价。")
+                    else:
+                        st.caption("以下价格为实时参考价，最终出票前通常还需要再次校验。")
+                        for item in flight_result["data"]:
+                            st.markdown(f"**{item['price']} {item['currency']} · {item['carrier']}**")
+                            st.caption(
+                                f"{item['departure']} -> {item['arrival']} · "
+                                f"{item['duration']} · 中转 {item['stops']} 次"
+                            )
+                            st.markdown("---")
+            else:
+                st.warning("当前路线缺少实时机场映射，暂时无法查询。")
 
     for tgt, info in moves.items():
         mode = info["mode"]

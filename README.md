@@ -19,6 +19,7 @@ An AI-powered Thailand travel sim built with Streamlit. You choose a starting ci
 - 预算、体力、时间、住宿共同约束行动
 - 支持白天 / 夜晚活动和交通规则差异
 - 旅行结束时生成 AI 结算纪念图
+- 支持 `Amadeus` 驱动的实时航班 / 酒店参考价 `Beta`
 
 ## Tech Stack
 
@@ -53,9 +54,13 @@ pip install -r requirements.txt
 
 ```env
 ZHIPUAI_API_KEY=your_api_key_here
+AMADEUS_API_KEY=your_amadeus_api_key_here
+AMADEUS_API_SECRET=your_amadeus_api_secret_here
 ```
 
-如果你不配 Key，项目依然可以启动，但会退化为默认天气概率和默认图片，AI 体验不完整。
+如果你不配 `ZHIPUAI_API_KEY`，项目依然可以启动，但会退化为默认天气概率和默认图片。
+
+如果你不配 `AMADEUS_API_KEY / AMADEUS_API_SECRET`，项目依然可以正常玩，只是不会显示实时航班和实时酒店参考价。
 
 ### 3. 启动项目
 
@@ -116,6 +121,24 @@ python -m unittest discover -s tests
 - `住宿选择`：每天到 `08:00` 后需要先安顿住宿
 
 如果钱花光、天数结束，或者选择主动结束行程，都会进入结算页。
+
+## 实时价格模式
+
+项目现在新增了两块实时数据入口：
+
+- `移动` 标签页中的 `实时航班参考（Beta）`
+- `住宿` 阶段中的 `实时酒店参考（Beta）`
+
+当前实现策略是：
+
+- 游戏内结算仍然用模拟规则，保证玩法稳定
+- 外部 API 价格作为 `实时参考价` 展示
+- 海岛城市的机票会使用最近的网关机场近似，例如：
+  - `Phi Phi Islands -> Phuket gateway`
+  - `Koh Lanta -> Krabi gateway`
+  - `Koh Lipe -> Hat Yai gateway`
+
+这样做的好处是游戏体验不会被外部接口完全绑死，但你仍然可以看到更接近真实世界的酒店和机票价格。
 
 ## 为什么这个项目值得继续做
 
