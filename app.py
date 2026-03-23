@@ -1,300 +1,615 @@
 import streamlit as st
-from game_state import game
-from data_store import GAME_DATA
-from ai_manager import ai_bot
 
-# ==================== 1. 全局配置 ====================
+from ai_manager import ai_bot
+from data_store import GAME_DATA
+from game_state import game
+
+
 st.set_page_config(page_title="AI 泰国穷游 Pro", page_icon="🇹🇭", layout="wide")
 
-# 准备默认背景图 (用于未开始游戏时)
 default_bg = "https://images.unsplash.com/photo-1552465011-b4e21bf6e79a?q=80&w=1200"
 
-# 获取当前游戏状态 (如果有)
+
 if st.session_state.get("player"):
     player = game.data
     current_city = player["city"]
-    city_desc = GAME_DATA[current_city]['description']
+    city_desc = GAME_DATA[current_city]["description"]
     current_weather = player["weather"]
-    curr_h = player['time']
-    
-    # 时间段计算
-    if 5 <= curr_h < 12: time_phase, time_label, theme_color = "morning", "🌅 上午", "#4CAF50"
-    elif 12 <= curr_h < 17: time_phase, time_label, theme_color = "noon", "☀️ 下午", "#FF9800"
-    elif 17 <= curr_h < 19: time_phase, time_label, theme_color = "sunset", "🌆 黄昏", "#9C27B0"
-    else: time_phase, time_label, theme_color = "night", "🌙 夜晚", "#2196F3"
+    curr_h = player["time"]
 
-    # 背景图逻辑 (带死锁)
+    if 5 <= curr_h < 12:
+        time_phase, time_label, theme_color = "morning", "清晨", "#7BD389"
+    elif 12 <= curr_h < 17:
+        time_phase, time_label, theme_color = "noon", "午后", "#FFB703"
+    elif 17 <= curr_h < 19:
+        time_phase, time_label, theme_color = "sunset", "黄昏", "#F4A261"
+    else:
+        time_phase, time_label, theme_color = "night", "夜晚", "#74C0FC"
+
     current_state_key = f"{current_city}_{current_weather}_{time_phase}"
-    if "bg_image_url" not in st.session_state: st.session_state.bg_image_url = ""
-    if "bg_state_key" not in st.session_state: st.session_state.bg_state_key = ""
+    if "bg_image_url" not in st.session_state:
+        st.session_state.bg_image_url = ""
+    if "bg_state_key" not in st.session_state:
+        st.session_state.bg_state_key = ""
 
     if st.session_state.bg_state_key != current_state_key:
-        with st.spinner(f"AI 正在绘制场景: {current_city} ({time_label})..."):
-            new_image_url = ai_bot.generate_city_card(current_city, city_desc, current_weather, time_phase)
-            st.session_state.bg_image_url = new_image_url
+        with st.spinner(f"AI 正在绘制场景：{GAME_DATA[current_city]['name_cn']} · {time_label}"):
+            st.session_state.bg_image_url = ai_bot.generate_city_card(
+                current_city, city_desc, current_weather, time_phase
+            )
             st.session_state.bg_state_key = current_state_key
-    
+
     bg_image = st.session_state.bg_image_url
     bgm_url = ai_bot.get_bgm(current_city)
 else:
-    # 游戏未开始时的默认值
     bg_image = default_bg
-    theme_color = "#4CAF50"
+    theme_color = "#7BD389"
     curr_h = 10
 
-# ==================== 2. 沉浸式 CSS (含规则弹窗) ====================
-st.markdown(f"""
+
+st.markdown(
+    f"""
 <style>
-    /* 全屏背景 */
     .stApp {{
-        background-image: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.6)), url("{bg_image}");
+        background-image:
+            linear-gradient(rgba(3, 8, 17, 0.35), rgba(3, 8, 17, 0.68)),
+            radial-gradient(circle at top left, rgba(255, 209, 102, 0.18), transparent 30%),
+            radial-gradient(circle at right center, rgba(116, 192, 252, 0.14), transparent 24%),
+            url("{bg_image}");
         background-size: cover;
         background-position: center;
         background-attachment: fixed;
         background-repeat: no-repeat;
         transition: background-image 0.5s ease-in-out;
     }}
-    /* 隐藏 Header */
-    header[data-testid="stHeader"] {{ background: transparent !important; visibility: hidden; }}
-    [data-testid="stDecoration"] {{ display: none; }}
-    
-    /* 布局调整 */
-    .block-container {{ padding-top: 1rem !important; padding-bottom: 2rem !important; }}
-    [data-testid="stSidebar"] {{ background-color: rgba(0, 0, 0, 0.85); border-right: 1px solid rgba(255,255,255,0.1); margin-top: 0 !important; }}
-    
-    /* 文字与按钮 */
-    h1, h2, h3, h4, p, span, div, label, .stMarkdown {{ color: white !important; text-shadow: 0 2px 4px rgba(0,0,0,0.8); }}
-    h1 {{ margin-top: 0 !important; padding-top: 0 !important; }}
-    .stButton>button {{
-        background: rgba(255, 255, 255, 0.15) !important; color: white !important;
-        border: 1px solid rgba(255,255,255,0.4) !important; backdrop-filter: blur(5px); border-radius: 12px;
+    header[data-testid="stHeader"] {{
+        background: transparent !important;
+        visibility: hidden;
     }}
-    .stButton>button:hover {{ background: rgba(255, 255, 255, 0.35) !important; border-color: white !important; transform: scale(1.02); }}
-    [data-testid="stVerticalBlock"] > div {{ background-color: transparent !important; border: none !important; }}
-
-    /* 时间胶囊 */
+    [data-testid="stDecoration"] {{
+        display: none;
+    }}
+    .block-container {{
+        padding-top: 1rem !important;
+        padding-bottom: 2rem !important;
+        max-width: 1240px;
+    }}
+    [data-testid="stSidebar"] {{
+        background-color: rgba(0, 0, 0, 0.82);
+        border-right: 1px solid rgba(255,255,255,0.08);
+        margin-top: 0 !important;
+    }}
+    h1, h2, h3, h4, p, span, div, label, .stMarkdown {{
+        color: white !important;
+        text-shadow: 0 2px 4px rgba(0,0,0,0.55);
+    }}
+    h1 {{
+        margin-top: 0 !important;
+        padding-top: 0 !important;
+        letter-spacing: -0.03em;
+    }}
+    [data-testid="stVerticalBlock"] > div {{
+        background-color: transparent !important;
+        border: none !important;
+    }}
+    .stButton > button {{
+        background: rgba(255, 255, 255, 0.14) !important;
+        color: white !important;
+        border: 1px solid rgba(255,255,255,0.32) !important;
+        backdrop-filter: blur(5px);
+        border-radius: 14px;
+        transition: all 0.18s ease;
+    }}
+    .stButton > button:hover {{
+        background: rgba(255, 255, 255, 0.24) !important;
+        border-color: rgba(255,255,255,0.72) !important;
+        transform: translateY(-1px);
+    }}
+    .stButton > button[kind="primary"] {{
+        width: 100%;
+        min-height: 56px;
+        border: none !important;
+        border-radius: 18px !important;
+        background: linear-gradient(135deg, #FFD166 0%, #F4A261 42%, #E76F51 100%) !important;
+        color: #151515 !important;
+        font-weight: 800 !important;
+        box-shadow: 0 18px 35px rgba(231, 111, 81, 0.3);
+        text-shadow: none !important;
+    }}
+    .stButton > button[kind="primary"] p {{
+        color: #151515 !important;
+        text-shadow: none !important;
+    }}
+    .stButton > button[kind="primary"]:hover {{
+        box-shadow: 0 20px 42px rgba(231, 111, 81, 0.4);
+    }}
+    div[data-testid="stForm"] {{
+        background: linear-gradient(180deg, rgba(9, 18, 27, 0.78), rgba(4, 10, 20, 0.84));
+        border: 1px solid rgba(255,255,255,0.14);
+        border-radius: 28px;
+        padding: 22px 22px 12px;
+        backdrop-filter: blur(14px);
+        box-shadow: 0 18px 50px rgba(0,0,0,0.35);
+    }}
+    div[data-testid="stExpander"] {{
+        background: rgba(0,0,0,0.45);
+        border: 1px solid rgba(255,255,255,0.12);
+        border-radius: 18px;
+        overflow: hidden;
+    }}
+    div[data-testid="stExpander"] details summary p {{
+        font-weight: 600;
+    }}
     .time-capsule {{
-        background-color: rgba(0,0,0,0.6); border-left: 5px solid {theme_color};
-        padding: 10px 20px; border-radius: 10px; display: inline-block; text-align: right; backdrop-filter: blur(5px); float: right;
+        background: rgba(0,0,0,0.58);
+        border-left: 5px solid {theme_color};
+        padding: 12px 20px;
+        border-radius: 16px;
+        display: inline-block;
+        text-align: right;
+        backdrop-filter: blur(8px);
+        float: right;
+        box-shadow: 0 16px 32px rgba(0,0,0,0.28);
     }}
-    .time-big {{ font-size: 32px; font-weight: bold; font-family: monospace; line-height: 1; color: {theme_color} !important; text-shadow: none !important; }}
-    .time-small {{ font-size: 14px; color: #ddd !important; margin-top: 5px; }}
-
-    /* === 规则弹窗样式 === */
+    .time-big {{
+        font-size: 32px;
+        font-weight: bold;
+        font-family: monospace;
+        line-height: 1;
+        color: {theme_color} !important;
+        text-shadow: none !important;
+    }}
+    .time-small {{
+        font-size: 14px;
+        color: #ddd !important;
+        margin-top: 5px;
+    }}
     .rules-card {{
-        background: rgba(0, 0, 0, 0.85);
-        border: 1px solid rgba(255,255,255,0.2);
-        border-radius: 20px;
+        background: rgba(0, 0, 0, 0.84);
+        border: 1px solid rgba(255,255,255,0.18);
+        border-radius: 28px;
         padding: 40px;
-        margin: 10vh auto;
-        max-width: 600px;
+        margin: 8vh auto 1.5rem;
+        max-width: 760px;
         text-align: center;
-        backdrop-filter: blur(10px);
-        box-shadow: 0 20px 50px rgba(0,0,0,0.8);
+        backdrop-filter: blur(14px);
+        box-shadow: 0 24px 60px rgba(0,0,0,0.55);
     }}
-    .rules-title {{ font-size: 32px; margin-bottom: 20px; color: #FF9800 !important; }}
-    .rules-list {{ text-align: left; font-size: 18px; line-height: 1.8; margin-bottom: 30px; }}
+    .rules-title {{
+        font-size: 36px;
+        margin-bottom: 12px;
+        color: #FFD166 !important;
+    }}
+    .rules-subtitle {{
+        max-width: 560px;
+        margin: 0 auto 24px;
+        color: rgba(255,255,255,0.82) !important;
+        font-size: 17px;
+        line-height: 1.7;
+    }}
+    .rules-list {{
+        text-align: left;
+        font-size: 17px;
+        line-height: 1.8;
+        display: grid;
+        gap: 12px;
+    }}
+    .rule-item {{
+        background: rgba(255,255,255,0.08);
+        border: 1px solid rgba(255,255,255,0.08);
+        border-radius: 18px;
+        padding: 14px 16px;
+    }}
+    .entry-shell {{
+        max-width: 1180px;
+        margin: 3vh auto 0;
+    }}
+    .hero-card {{
+        background: linear-gradient(155deg, rgba(8, 29, 43, 0.78), rgba(4, 10, 20, 0.88));
+        border: 1px solid rgba(255,255,255,0.16);
+        border-radius: 28px;
+        padding: 36px;
+        backdrop-filter: blur(16px);
+        box-shadow: 0 24px 60px rgba(0,0,0,0.45);
+        min-height: 100%;
+    }}
+    .hero-eyebrow {{
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 14px;
+        background: rgba(255, 209, 102, 0.14);
+        border: 1px solid rgba(255, 209, 102, 0.28);
+        border-radius: 999px;
+        color: #FFD166 !important;
+        font-size: 13px;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        text-shadow: none !important;
+    }}
+    .hero-title {{
+        margin: 18px 0 14px;
+        font-size: clamp(2.7rem, 4vw, 4.8rem);
+        line-height: 0.95;
+    }}
+    .hero-subtitle {{
+        max-width: 620px;
+        color: rgba(255,255,255,0.86) !important;
+        font-size: 1.05rem;
+        line-height: 1.8;
+        margin-bottom: 24px;
+    }}
+    .hero-pills {{
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-bottom: 24px;
+    }}
+    .hero-pill {{
+        padding: 10px 14px;
+        border-radius: 999px;
+        background: rgba(255,255,255,0.1);
+        border: 1px solid rgba(255,255,255,0.12);
+        color: #F6F7EB !important;
+        font-size: 14px;
+    }}
+    .hero-feature-grid {{
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 14px;
+        margin-top: 18px;
+    }}
+    .hero-feature {{
+        background: rgba(255,255,255,0.08);
+        border: 1px solid rgba(255,255,255,0.08);
+        border-radius: 20px;
+        padding: 16px;
+    }}
+    .hero-feature strong {{
+        display: block;
+        margin-bottom: 6px;
+        color: #FFD166 !important;
+        text-shadow: none !important;
+    }}
+    .helper-card {{
+        margin-top: 18px;
+        background: rgba(255,255,255,0.09);
+        border: 1px solid rgba(255,255,255,0.1);
+        border-radius: 22px;
+        padding: 18px 20px;
+        backdrop-filter: blur(12px);
+    }}
+    .helper-title {{
+        margin: 0 0 10px;
+        font-size: 16px;
+        color: #FFD166 !important;
+        text-shadow: none !important;
+    }}
+    .helper-copy {{
+        margin: 0;
+        color: rgba(255,255,255,0.82) !important;
+        line-height: 1.7;
+    }}
+    @media (max-width: 900px) {{
+        .hero-card {{
+            padding: 26px;
+        }}
+        .hero-feature-grid {{
+            grid-template-columns: 1fr;
+        }}
+        .rules-card {{
+            padding: 28px 22px;
+            margin-top: 5vh;
+        }}
+    }}
 </style>
-""", unsafe_allow_html=True)
+""",
+    unsafe_allow_html=True,
+)
 
-# ==================== 3. 规则拦截逻辑 (新增) ====================
+
 if "rules_accepted" not in st.session_state:
     st.session_state["rules_accepted"] = False
 
+
 if not st.session_state["rules_accepted"]:
-    st.markdown("""
+    st.markdown(
+        """
     <div class="rules-card">
-        <div class="rules-title">🎒 AI 泰国穷游 · 玩法说明</div>
+        <div class="rules-title">🎓 AI 泰国穷游 · 出发前须知</div>
+        <div class="rules-subtitle">
+            这不是普通旅行清单，而是一场由天气、体力、预算和临场选择共同决定的 AI 旅程。
+            先花 20 秒看完规则，等会儿玩起来会顺很多。
+        </div>
         <div class="rules-list">
-            1. 🤖 <b>全 AI 生成</b>：所有背景图、天气、结局图均由 AI 实时绘制，请耐心等待生成。<br>
-            2. 💰 <b>资源管理</b>：你的预算和体力有限。没钱或累倒都会导致游戏结束。<br>
-            3. 🌙 <b>夜间禁行</b>：晚上 (18:00-08:00) 只有飞机运营，车船停运，请规划好行程。<br>
-            4. ☁️ <b>天气系统</b>：雨天行动会消耗更多体力。<br>
-            5. 🎵 <b>沉浸体验</b>：建议开启声音，享受城市背景白噪音。
+            <div class="rule-item">1. 🤖 <b>全 AI 生成</b>：背景图、天气判断和结局图都由 AI 参与生成，首次进入新状态时会有短暂等待。</div>
+            <div class="rule-item">2. 💰 <b>资源管理</b>：预算和体力都会决定你能不能继续旅行，乱花钱和硬撑都可能直接结束旅程。</div>
+            <div class="rule-item">3. 🌙 <b>夜间交通限制</b>：18:00 到次日 08:00 只有纯航班可用，车船类路线会停运。</div>
+            <div class="rule-item">4. 🌦️ <b>天气影响行动</b>：雨天出门会更累，景点和奔波类活动成本会上升。</div>
+            <div class="rule-item">5. 🎧 <b>建议打开声音</b>：不同城市会切换不同 BGM，沉浸感会好很多。</div>
         </div>
     </div>
-    """, unsafe_allow_html=True)
-    
-    c1, c2, c3 = st.columns([1, 1, 1])
-    with c2:
-        # 只有点击这个按钮，状态变为 True，才会显示下面的内容
-        if st.button("🚀 晓得了，开始旅程", type="primary"):
+    """,
+        unsafe_allow_html=True,
+    )
+
+    _, center_col, _ = st.columns([1, 1.8, 1])
+    with center_col:
+        if st.button("🚀 规则已了解，开始我的旅程", type="primary", use_container_width=True):
             st.session_state["rules_accepted"] = True
             st.rerun()
-    
-    st.stop() # 🛑 强制暂停代码，不渲染后面的内容
-
-# ==================== 4. 游戏初始化设置 ====================
-if st.session_state.get("player") is None:
-    st.title("🇹🇭 AI 泰国穷游模拟器")
-    st.markdown("### 🎒 自定义你的旅程")
-    
-    c1, c2 = st.columns(2)
-    with c1:
-        start_city = st.selectbox("出发城市", list(GAME_DATA.keys()))
-        start_month = st.selectbox("旅行月份", list(range(1, 13)), index=9)
-        start_time = st.slider("落地时间", 0, 23, 10)
-    with c2:
-        budget = st.number_input("预算 (THB)", 5000, 100000, 30000, step=1000)
-        days = st.number_input("天数", 1, 30, 5)
-
-    if st.button("🛫 起飞", type="primary"):
-        with st.spinner("AI 正在准备行程数据..."):
-            game.start_game(start_city, budget, start_time, days, start_month)
-            st.rerun()
-            
-    st.divider()
-    with st.expander("⚙️ API 设置 (可选)"):
-        st.info("本项目依赖 **智谱 AI**。如果你有自己的 Key，请填入；否则使用公共额度。")
-        key_input = st.text_input("智谱 API Key", type="password", placeholder="sk-...")
-        if key_input: st.session_state["user_api_key"] = key_input
 
     st.stop()
 
-# ==================== 5. 游戏主界面 ====================
 
-# --- 顶部标题 ---
+if st.session_state.get("player") is None:
+    left_col, right_col = st.columns([1.2, 0.9], gap="large")
+
+    with left_col:
+        st.markdown(
+            """
+        <div class="entry-shell">
+            <div class="hero-card">
+                <div class="hero-eyebrow">Thailand Travel Simulator</div>
+                <div class="hero-title">AI 泰国穷游模拟器</div>
+                <div class="hero-subtitle">
+                    从一座城市落地，带着有限预算和体力，在天气、时间、住宿与交通限制里做出每一步选择。
+                    这不是填表开局，而是先替自己设计一段会发生故事的旅程。
+                </div>
+                <div class="hero-pills">
+                    <div class="hero-pill">10 座城市路线</div>
+                    <div class="hero-pill">AI 场景生成</div>
+                    <div class="hero-pill">动态天气</div>
+                    <div class="hero-pill">预算与体力管理</div>
+                </div>
+                <div class="hero-feature-grid">
+                    <div class="hero-feature">
+                        <strong>城市感更强</strong>
+                        每次切换城市、天气和时段，画面氛围都会跟着变化。
+                    </div>
+                    <div class="hero-feature">
+                        <strong>选择真的有代价</strong>
+                        想省钱、想打卡、想夜生活，三件事通常不能同时满足。
+                    </div>
+                    <div class="hero-feature">
+                        <strong>路线不是摆设</strong>
+                        夜里不是所有路线都能走，跨城决策会改变整趟旅行节奏。
+                    </div>
+                    <div class="hero-feature">
+                        <strong>适合反复重开</strong>
+                        换一个月份、落地城市和预算，旅程手感会完全不同。
+                    </div>
+                </div>
+            </div>
+            <div class="helper-card">
+                <div class="helper-title">开局建议</div>
+                <p class="helper-copy">
+                    如果你只是第一次体验，建议从曼谷开始、预算 30,000 THB、5 天、上午抵达。
+                    这个组合最容易感受到城市切换、资源管理和 AI 场景变化。
+                </p>
+            </div>
+        </div>
+        """,
+            unsafe_allow_html=True,
+        )
+
+    with right_col:
+        st.markdown("## 设计这趟旅程")
+        st.caption("把出发条件定下来，然后我们直接开局。开始按钮放在配置面板底部，顺着填完就能走。")
+
+        with st.form("start_trip_form"):
+            start_city = st.selectbox("出发城市", list(GAME_DATA.keys()))
+            start_month = st.selectbox("旅行月份", list(range(1, 13)), index=9)
+            start_time = st.slider("落地时间", 0, 23, 10)
+            budget = st.number_input("预算 (THB)", 5000, 100000, 30000, step=1000)
+            days = st.number_input("天数", 1, 30, 5)
+            start_clicked = st.form_submit_button(
+                "🛫 开始我的泰国之旅", type="primary", use_container_width=True
+            )
+
+        st.divider()
+        with st.expander("⚙️ API 设置（可选）"):
+            st.info("本项目依赖 **智谱 AI**。如果你有自己的 Key，可以填入；否则会使用默认降级模式。")
+            key_input = st.text_input("智谱 API Key", type="password", placeholder="sk-...")
+            if key_input:
+                st.session_state["user_api_key"] = key_input
+
+    if start_clicked:
+        with st.spinner("AI 正在准备行程数据..."):
+            game.start_game(start_city, budget, start_time, days, start_month)
+            st.rerun()
+
+    st.stop()
+
+
 c1, c2 = st.columns([2, 1])
 with c1:
     st.title(f"📍 {GAME_DATA[current_city]['name_cn']}")
     st.markdown(f"*{city_desc}*")
-    w_icon = {"sunny":"☀️","cloudy":"☁️","rainy":"🌧️"}.get(current_weather, "✨")
+    w_icon = {"sunny": "☀️", "cloudy": "☁️", "rainy": "🌧️"}.get(current_weather, "✨")
     st.info(f"{w_icon} {current_weather.capitalize()}")
 
 with c2:
-    st.markdown(f"""
+    st.markdown(
+        f"""
     <div class="time-capsule">
         <div class="time-big">{int(curr_h):02d}:00</div>
-        <div class="time-small">Day {player['day']} | {time_label}</div>
+        <div class="time-small">Day {player['day']} · {time_label}</div>
     </div>
-    """, unsafe_allow_html=True)
+    """,
+        unsafe_allow_html=True,
+    )
 
 st.divider()
 
-# --- 侧边栏 ---
+
 with st.sidebar:
     st.header("🎒 背包")
     st.subheader(f"💰 {player['money']:,}")
-    st.subheader(f"⚡ {player['stamina']}/100")
+    st.subheader(f"🔋 {player['stamina']}/100")
     st.divider()
     st.markdown("🎵 **BGM**")
     auto_play = st.toggle("自动播放", value=True)
     st.audio(bgm_url, start_time=0, autoplay=auto_play, loop=True)
     st.divider()
-    if st.button("🔄 重开游戏"):
+    if st.button("🔁 重新开始游戏", use_container_width=True):
         st.session_state.player = None
-        st.session_state["rules_accepted"] = False # 重置规则，让用户再看一遍
+        st.session_state["rules_accepted"] = False
+        st.session_state.pop("bg_image_url", None)
+        st.session_state.pop("bg_state_key", None)
         st.rerun()
 
-# --- 核心逻辑 ---
+
 if player["time"] == 8 and not player["hotel_settled"]:
     st.subheader("🏨 选择住宿")
     opts = game.get_hotel_options()
     cols = st.columns(3)
-    for i, h in enumerate(opts):
+    for i, hotel in enumerate(opts):
         with cols[i]:
-            if st.button(f"{h['name']}\n{h['price']}฿", key=f"h_{i}"):
-                if player["money"] >= h['price']:
-                    game._update(money=h['price'], time=1)
+            if st.button(
+                f"{hotel['name']}\n{hotel['price']} THB",
+                key=f"h_{i}",
+                use_container_width=True,
+            ):
+                if player["money"] >= hotel["price"]:
+                    game._update(money=hotel["price"], time=1)
                     player["hotel_settled"] = True
                     st.rerun()
-                else: st.toast("没钱！")
+                else:
+                    st.toast("余额不够，换一家吧。")
     st.stop()
 
-t1, t2, t3 = st.tabs(["🎡 游玩", "🚀 移动", "🛌 休息"])
 
-with t1: # 游玩
+t1, t2, t3 = st.tabs(["🎯 游玩", "🧭 移动", "🛌 休息"])
+
+
+with t1:
     valid_acts = []
-    for act in GAME_DATA[current_city]['activities']:
-        if act['type']=='scenic' and act['id'] in player['visited_activities']: continue
-        is_open = False
-        if act['type']=='scenic': is_open=(8<=curr_h<17)
-        elif act['type']=='night': is_open=(curr_h>=18)
-        else: is_open=(8<=curr_h<22)
-        if is_open: valid_acts.append(act)
-    
-    if not valid_acts: st.warning("暂无活动")
-    
+    for act in GAME_DATA[current_city]["activities"]:
+        if act["type"] == "scenic" and act["id"] in player["visited_activities"]:
+            continue
+
+        if act["type"] == "scenic":
+            is_open = 8 <= curr_h < 17
+        elif act["type"] == "night":
+            is_open = curr_h >= 18
+        else:
+            is_open = 8 <= curr_h < 22
+
+        if is_open:
+            valid_acts.append(act)
+
+    if not valid_acts:
+        st.warning("当前时段没有可用活动。")
+
     for act in valid_acts:
         c_info, c_btn = st.columns([3, 1])
         with c_info:
             st.markdown(f"**{act['name']}**")
-            st.caption(f"💰{act['cost_money']} | ⏳{act['cost_time']}h | ⚡{act['cost_stamina']}")
+            st.caption(f"💰 {act['cost_money']} | ⏰ {act['cost_time']}h | 🔋 {act['cost_stamina']}")
         with c_btn:
             st.write("")
-            if st.button("Go", key=f"go_{act['id']}"):
-                if player["money"]<act["cost_money"]: st.toast("钱不够")
-                elif player["stamina"]<act["cost_stamina"]: st.toast("累")
+            if st.button("Go", key=f"go_{act['id']}", use_container_width=True):
+                if player["money"] < act["cost_money"]:
+                    st.toast("钱不够。")
+                elif player["stamina"] < act["cost_stamina"]:
+                    st.toast("体力不够。")
                 else:
-                    game.do_activity(act['id'], act['cost_money'], act['cost_stamina'], act['cost_time'], act['name'])
+                    game.do_activity(
+                        act["id"],
+                        act["cost_money"],
+                        act["cost_stamina"],
+                        act["cost_time"],
+                        act["name"],
+                    )
                     st.rerun()
         st.markdown("---")
 
-with t2: # 移动
+
+with t2:
     moves = game.get_travel_choices()
     is_night = curr_h >= 18 or curr_h < 8
-    if not moves: st.info("孤岛，无路可走")
+
+    if not moves:
+        st.info("这里像一座孤岛，暂时没有可走的路线。")
+
     for tgt, info in moves.items():
-        mode = info['mode']
+        mode = info["mode"]
         is_flight_kw = any(k in mode for k in ["飞机", "航班", "直飞"])
         has_ground_kw = any(k in mode for k in ["船", "车", "巴", "火车", "联运"])
         is_pure_flight = is_flight_kw and not has_ground_kw
         is_allowed = (not is_night) or (is_night and is_pure_flight)
 
-        c1, c2 = st.columns([3, 1])
-        with c1:
+        move_c1, move_c2 = st.columns([3, 1])
+        with move_c1:
             st.markdown(f"**➡️ {GAME_DATA[tgt]['name_cn']}**")
-            if not is_allowed: st.caption(f"🚫 {mode} (夜间停运)")
-            else: st.caption(f"{info['mode']} ({info['cost_time']}h) | ⚡-{info['cost_stamina']}")
-        with c2:
+            if not is_allowed:
+                st.caption(f"🚫 {mode}（夜间停运）")
+            else:
+                st.caption(f"{mode} · {info['cost_time']}h · 🔋 {info['cost_stamina']}")
+        with move_c2:
             st.write("")
-            if st.button("出发", key=f"mv_{tgt}", disabled=not is_allowed):
-                if player["stamina"]<info["cost_stamina"]: st.toast("体力不够")
+            if st.button("出发", key=f"mv_{tgt}", disabled=not is_allowed, use_container_width=True):
+                if player["stamina"] < info["cost_stamina"]:
+                    st.toast("体力不够，先休息一下。")
                 else:
                     game.travel_to(tgt)
                     st.rerun()
         st.markdown("---")
-    if st.button("🏠 结束行程回家", type="primary"):
+
+    if st.button("🏠 结束行程回家", type="primary", use_container_width=True):
         game.finish_game()
         st.rerun()
 
-with t3: # 休息
-    if 6<=curr_h<18:
-        h = st.slider("午睡", 1, 4, 2)
-        if st.button("睡觉"):
-            game.sleep(h)
+
+with t3:
+    if 6 <= curr_h < 18:
+        nap_hours = st.slider("午睡时长", 1, 4, 2)
+        if st.button("小睡一会儿", use_container_width=True):
+            game.sleep(nap_hours)
             st.rerun()
-    if st.button("💤 睡到明天 (08:00)"):
+
+    if st.button("🌙 一觉睡到明天 08:00", use_container_width=True):
         game.sleep(None)
         st.rerun()
 
-# ==================== 6. 游戏结束 ====================
+
 if player["game_over"]:
     is_success = player.get("success", False)
-    
-    with st.spinner("AI 正在生成旅行纪念册..."):
-        end_image_url = ai_bot.generate_ending_card(is_success, current_city)
-    
-    if is_success: st.balloons()
-    else: st.snow()
 
-    st.markdown(f"""
+    with st.spinner("AI 正在生成你的旅行纪念图..."):
+        end_image_url = ai_bot.generate_ending_card(is_success, current_city)
+
+    if is_success:
+        st.balloons()
+    else:
+        st.snow()
+
+    st.markdown(
+        f"""
     <style>
         [data-testid="stSidebar"] {{ display: none; }}
         .block-container {{ padding-top: 0 !important; }}
-        .stApp {{ background-image: linear-gradient(rgba(0,0,0,0.8), rgba(0,0,0,0.8)), url("{end_image_url}"); }}
-        
+        .stApp {{
+            background-image:
+                linear-gradient(rgba(0,0,0,0.82), rgba(0,0,0,0.82)),
+                url("{end_image_url}");
+        }}
         .end-card {{
             background: rgba(255, 255, 255, 0.95);
             border-radius: 24px;
             padding: 40px;
             margin: 5vh auto;
-            max-width: 700px;
+            max-width: 720px;
             text-align: center;
             color: #333 !important;
             box-shadow: 0 20px 50px rgba(0,0,0,0.8);
         }}
-        .end-card * {{ color: #333 !important; text-shadow: none !important; }}
+        .end-card * {{
+            color: #333 !important;
+            text-shadow: none !important;
+        }}
         .memory-photo {{
             width: 100%;
             border-radius: 16px;
@@ -309,28 +624,36 @@ if player["game_over"]:
             gap: 15px;
             margin-top: 25px;
         }}
-        .stat-val {{ font-size: 24px; font-weight: bold; color: #0066cc !important; }}
+        .stat-val {{
+            font-size: 24px;
+            font-weight: bold;
+            color: #0066cc !important;
+        }}
     </style>
-    """, unsafe_allow_html=True)
+    """,
+        unsafe_allow_html=True,
+    )
 
     html_content = f"""
     <div class="end-card">
         <img src="{end_image_url}" class="memory-photo">
-        <h1>{"🎉 完美旅程" if is_success else "🥀 旅程结束"}</h1>
+        <h1>{"🎉 完美旅程" if is_success else "🧳 旅程结束"}</h1>
         <p style="font-size: 18px; margin: 20px 0;">“{player['fail_reason']}”</p>
         <div class="stat-grid">
-            <div><div class="stat-val">{player['day']} 天</div><div>生存时间</div></div>
+            <div><div class="stat-val">{player['day']} 天</div><div>旅行时长</div></div>
             <div><div class="stat-val">{len(player['visited_activities'])} 个</div><div>打卡地点</div></div>
-            <div><div class="stat-val">{player['money']:,} ฿</div><div>剩余资金</div></div>
+            <div><div class="stat-val">{player['money']:,} THB</div><div>剩余资金</div></div>
         </div>
     </div>
     """
     st.markdown(html_content, unsafe_allow_html=True)
-    
-    c1, c2, c3 = st.columns([1, 1, 1])
-    with c2:
-        if st.button("🔄 开启新旅程", type="primary"):
+
+    _, center_restart, _ = st.columns([1, 1, 1])
+    with center_restart:
+        if st.button("🔁 开启新旅程", type="primary", use_container_width=True):
             st.session_state.player = None
-            st.session_state["rules_accepted"] = False # 重置规则
+            st.session_state["rules_accepted"] = False
+            st.session_state.pop("bg_image_url", None)
+            st.session_state.pop("bg_state_key", None)
             st.rerun()
     st.stop()
