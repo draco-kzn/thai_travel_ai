@@ -22,8 +22,12 @@ class GameState:
         st.session_state.player = None
         st.session_state.pop("bg_image_url", None)
         st.session_state.pop("bg_state_key", None)
+        st.session_state.pop("active_trip_journal_id", None)
+        st.session_state.pop("active_trip_journal_saved", None)
 
     def start_game(self, start_city, budget, start_time, total_days, start_month):
+        st.session_state.pop("active_trip_journal_id", None)
+        st.session_state.pop("active_trip_journal_saved", None)
         st.session_state.player = {
             "money": budget,
             "stamina": 100,
@@ -40,6 +44,7 @@ class GameState:
             "fail_reason": "",
             "success": False,
             "visited_activities": set(),
+            "route_path": [start_city],
         }
         self.refresh_weather()
 
@@ -98,6 +103,7 @@ class GameState:
 
         self.data["stamina"] -= route["cost_stamina"]
         self.data["city"] = target_city
+        self.data["route_path"].append(target_city)
 
         arrival = self.data["time"] + route["cost_time"]
         if arrival >= 22:

@@ -8,3 +8,4 @@ venv/
 .mypy_cache/
 streamlit.log
 streamlit.err.log
+data/trip_journals.json

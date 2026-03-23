@@ -13,6 +13,7 @@ from travel_realtime import (
     search_live_flights,
     search_live_hotels,
 )
+from trip_archive import build_trip_journal, delete_trip_journal, list_trip_journals, save_trip_journal
 
 
 st.set_page_config(page_title="AI 泰国穷游 Pro", page_icon="🇹🇭", layout="wide")
@@ -429,6 +430,53 @@ if st.session_state.get("player") is None:
             if key_input:
                 st.session_state["user_api_key"] = key_input
 
+    st.divider()
+    st.markdown("## 路书档案馆")
+    journals = list_trip_journals()
+    if not journals:
+        st.caption("还没有已归档的旅行路书。完成一次旅程后，这里会自动出现你的旅行纪念册。")
+    else:
+        for journal in journals:
+            main_col, open_col, delete_col = st.columns([5, 1, 1])
+            with main_col:
+                st.markdown(f"**{journal['title']}**")
+                st.caption(
+                    f"{journal['saved_at']} · {journal['days']} 天 · "
+                    f"{journal['activity_count']} 个活动 · 终点 {journal['final_city']}"
+                )
+                st.caption(journal["summary"])
+            with open_col:
+                if st.button("读取", key=f"open_journal_{journal['id']}", use_container_width=True):
+                    st.session_state["selected_journal_id"] = journal["id"]
+            with delete_col:
+                if st.button("删除", key=f"delete_journal_{journal['id']}", use_container_width=True):
+                    delete_trip_journal(journal["id"])
+                    if st.session_state.get("selected_journal_id") == journal["id"]:
+                        st.session_state.pop("selected_journal_id", None)
+                    st.rerun()
+            st.markdown("---")
+
+        selected_journal_id = st.session_state.get("selected_journal_id")
+        if selected_journal_id:
+            selected = next((item for item in journals if item["id"] == selected_journal_id), None)
+            if selected:
+                with st.expander("📖 路书详情", expanded=True):
+                    if selected.get("cover_image_url"):
+                        st.image(selected["cover_image_url"], use_container_width=True)
+                    st.markdown(f"**结局**：{selected['outcome']}")
+                    st.markdown(f"**总结**：{selected['summary']}")
+                    st.markdown(f"**路线**：{' → '.join(selected['route_path'])}")
+                    st.markdown(f"**收尾原因**：{selected['fail_reason']}")
+                    st.markdown("**活动记录**")
+                    if selected["activities"]:
+                        for item in selected["activities"]:
+                            st.caption(f"{item['city']} · {item['name']}")
+                    else:
+                        st.caption("这趟旅程没有留下活动打卡记录。")
+                    st.markdown("**时间线**")
+                    for line in selected["history"][:12]:
+                        st.caption(line)
+
     if start_clicked:
         with st.spinner("AI 正在准备行程数据..."):
             game.start_game(start_city, budget, start_time, days, start_month)
@@ -715,6 +763,12 @@ if player["game_over"]:
     with st.spinner("AI 正在生成你的旅行纪念图..."):
         end_image_url = ai_bot.generate_ending_card(is_success, current_city)
 
+    if not st.session_state.get("active_trip_journal_saved"):
+        journal = build_trip_journal(player, end_image_url)
+        saved_journal = save_trip_journal(journal)
+        st.session_state["active_trip_journal_id"] = saved_journal["id"]
+        st.session_state["active_trip_journal_saved"] = True
+
     if is_success:
         st.balloons()
     else:
@@ -763,13 +817,54 @@ if player["game_over"]:
             font-weight: bold;
             color: #0066cc !important;
         }}
+        .celebration-banner {{
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 999px;
+            background: linear-gradient(135deg, #ffd166, #f4a261);
+            color: #1b1b1b !important;
+            font-weight: 800;
+            margin-bottom: 16px;
+            box-shadow: 0 12px 24px rgba(244, 162, 97, 0.28);
+        }}
+        .journal-card {{
+            margin-top: 24px;
+            padding: 24px;
+            border-radius: 20px;
+            background: #f7f2e8;
+            text-align: left;
+            border: 1px solid rgba(0,0,0,0.08);
+        }}
+        .journal-card h3 {{
+            margin-top: 0;
+            margin-bottom: 12px;
+        }}
+        .journal-card ul {{
+            padding-left: 20px;
+        }}
     </style>
     """,
         unsafe_allow_html=True,
     )
 
+    active_journal = None
+    active_journal_id = st.session_state.get("active_trip_journal_id")
+    if active_journal_id:
+        journals = list_trip_journals()
+        active_journal = next((item for item in journals if item["id"] == active_journal_id), None)
+
+    route_text = " → ".join(active_journal["route_path"]) if active_journal else GAME_DATA[current_city]["name_cn"]
+    activities_html = ""
+    if active_journal and active_journal["activities"]:
+        activities_html = "".join(
+            f"<li>{item['city']} · {item['name']}</li>" for item in active_journal["activities"][:8]
+        )
+    else:
+        activities_html = "<li>这趟旅程没有留下活动打卡记录。</li>"
+
     html_content = f"""
     <div class="end-card">
+        <div class="celebration-banner">{"旅程完成 · 路书已归档" if is_success else "旅程结束 · 路书已归档"}</div>
         <img src="{end_image_url}" class="memory-photo">
         <h1>{"🎉 完美旅程" if is_success else "🧳 旅程结束"}</h1>
         <p style="font-size: 18px; margin: 20px 0;">“{player['fail_reason']}”</p>
@@ -778,14 +873,33 @@ if player["game_over"]:
             <div><div class="stat-val">{len(player['visited_activities'])} 个</div><div>打卡地点</div></div>
             <div><div class="stat-val">{player['money']:,} THB</div><div>剩余资金</div></div>
         </div>
+        <div class="journal-card">
+            <h3>📖 本次路书摘要</h3>
+            <p><strong>路线</strong>：{route_text}</p>
+            <p><strong>总结</strong>：{active_journal['summary'] if active_journal else player['fail_reason']}</p>
+            <p><strong>精选片段</strong></p>
+            <ul>{activities_html}</ul>
+        </div>
     </div>
     """
     st.markdown(html_content, unsafe_allow_html=True)
 
-    _, center_restart, _ = st.columns([1, 1, 1])
+    left_action, center_restart, right_action = st.columns([1, 1, 1])
+    with left_action:
+        if active_journal and st.button("📚 打开路书档案馆", use_container_width=True):
+            st.session_state["selected_journal_id"] = active_journal["id"]
+            game.reset_game()
+            st.session_state["rules_accepted"] = False
+            st.rerun()
     with center_restart:
         if st.button("🔁 开启新旅程", type="primary", use_container_width=True):
             game.reset_game()
             st.session_state["rules_accepted"] = False
+            st.rerun()
+    with right_action:
+        if active_journal and st.button("🗑 删除本次路书", use_container_width=True):
+            delete_trip_journal(active_journal["id"])
+            st.session_state.pop("active_trip_journal_id", None)
+            st.session_state["active_trip_journal_saved"] = True
             st.rerun()
     st.stop()
