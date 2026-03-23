@@ -46,14 +46,14 @@ CITY_REALTIME_META = {
         "gateway_airports": ["UTP"],
     },
     "Hua Hin": {
-        "airport_code": "HHQ",
-        "airport_label": "Hua Hin Airport",
+        "airport_code": "BKK",
+        "airport_label": "Bangkok gateway",
         "hotel_label": "Hua Hin",
         "lat": 12.5684,
         "lng": 99.9577,
-        "flight_note": "使用华欣机场近似实时机票。",
-        "has_airport": True,
-        "gateway_airports": ["HHQ"],
+        "flight_note": "华欣在玩法里按曼谷网关处理，更接近真实旅行里“先回曼谷再飞”的逻辑。",
+        "has_airport": False,
+        "gateway_airports": ["BKK"],
     },
     "Phuket": {
         "airport_code": "HKT",
@@ -128,7 +128,7 @@ def get_city_realtime_meta(city_name):
 
 def route_has_flight_component(origin_city, destination_city):
     mode = TRAVEL_ROUTES.get(origin_city, {}).get(destination_city, {}).get("mode", "")
-    return any(keyword in mode for keyword in ("飞机", "航班", "直飞"))
+    return any(keyword in mode for keyword in ("飞机", "航班", "直飞", "飞到", "转机"))
 
 
 def build_realtime_flight_plan(origin_city, destination_city):

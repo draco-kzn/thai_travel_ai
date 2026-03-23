@@ -42,6 +42,10 @@ class TravelRealtimeTests(unittest.TestCase):
     def test_parse_iso_duration_to_minutes(self):
         self.assertEqual(_parse_iso_duration_to_minutes("PT2H35M"), 155)
 
+    def test_bangkok_to_hua_hin_is_not_queryable_as_flight(self):
+        plan = build_realtime_flight_plan("Bangkok", "Hua Hin")
+        self.assertFalse(plan["queryable"])
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -56,6 +56,22 @@ class TravelSimulatorDataTests(unittest.TestCase):
                     self.assertIsInstance(route["mode"], str)
                     self.assertTrue(route["mode"].strip())
 
+    def test_phi_phi_to_phuket_is_not_a_flight_route(self):
+        self.assertNotIn("飞机", TRAVEL_ROUTES["Phi Phi Islands"]["Phuket"]["mode"])
+
+    def test_bangkok_to_phi_phi_requires_flight_and_boat_logic(self):
+        mode = TRAVEL_ROUTES["Bangkok"]["Phi Phi Islands"]["mode"]
+        self.assertTrue("飞" in mode or "飞机" in mode)
+        self.assertTrue("船" in mode or "快艇" in mode)
+
+    def test_bangkok_to_hua_hin_is_surface_transport(self):
+        mode = TRAVEL_ROUTES["Bangkok"]["Hua Hin"]["mode"]
+        self.assertFalse("飞机" in mode or "直飞" in mode)
+
+    def test_pattaya_to_hua_hin_is_not_ferry_only_magic_route(self):
+        mode = TRAVEL_ROUTES["Pattaya"]["Hua Hin"]["mode"]
+        self.assertNotIn("皇家渡轮", mode)
+
 
 if __name__ == "__main__":
     unittest.main()

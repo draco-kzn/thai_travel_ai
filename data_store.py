@@ -213,94 +213,154 @@ CITY_PRICE_MULTIPLIER = {
     "Koh Lipe": 1.4,
 }
 
+CITY_ROUTE_META = {
+    "Bangkok": {"has_practical_airport": True, "gateway": "Bangkok", "cluster": "mainland-central"},
+    "Chiang Mai": {"has_practical_airport": True, "gateway": "Chiang Mai", "cluster": "north"},
+    "Pattaya": {"has_practical_airport": True, "gateway": "Pattaya", "cluster": "east"},
+    "Hua Hin": {"has_practical_airport": False, "gateway": "Bangkok", "cluster": "west"},
+    "Phuket": {"has_practical_airport": True, "gateway": "Phuket", "cluster": "andaman-airport"},
+    "Krabi": {"has_practical_airport": True, "gateway": "Krabi", "cluster": "andaman-airport"},
+    "Koh Samui": {"has_practical_airport": True, "gateway": "Koh Samui", "cluster": "gulf-airport"},
+    "Phi Phi Islands": {"has_practical_airport": False, "gateway": "Phuket", "cluster": "andaman-island"},
+    "Koh Lanta": {"has_practical_airport": False, "gateway": "Krabi", "cluster": "andaman-island"},
+    "Koh Lipe": {"has_practical_airport": False, "gateway": "Hat Yai", "cluster": "far-island"},
+}
 
-TIME_NEAR = 2
-TIME_MID = 4
-TIME_FAR = 10
-TIME_EXTREME = 14
 
-STAMINA_EASY = 15
-STAMINA_TIRED = 35
-STAMINA_DYING = 60
+def build_route(mode, cost_time, cost_stamina):
+    return {"mode": mode, "cost_time": cost_time, "cost_stamina": cost_stamina}
 
-TRAVEL_ROUTES = {}
 
-cities = list(GAME_DATA.keys())
-for start in cities:
-    TRAVEL_ROUTES[start] = {}
-    for end in cities:
+def derive_route(start, end):
+    start_meta = CITY_ROUTE_META[start]
+    end_meta = CITY_ROUTE_META[end]
+    start_cluster = start_meta["cluster"]
+    end_cluster = end_meta["cluster"]
+
+    if {start, end} == {"Bangkok", "Pattaya"}:
+        return build_route("大巴/包车", 3, 15)
+
+    if {start, end} == {"Bangkok", "Hua Hin"}:
+        return build_route("火车/大巴", 4, 20)
+
+    if {start, end} == {"Pattaya", "Hua Hin"}:
+        return build_route("大巴/包车", 6, 25)
+
+    if {start, end} == {"Phuket", "Krabi"}:
+        return build_route("大巴/快艇联运", 4, 20)
+
+    if {start, end} == {"Phuket", "Phi Phi Islands"}:
+        return build_route("快艇/渡轮", 2, 20)
+
+    if {start, end} == {"Krabi", "Phi Phi Islands"}:
+        return build_route("快艇/渡轮", 2, 20)
+
+    if {start, end} == {"Krabi", "Koh Lanta"}:
+        return build_route("面包车+渡轮", 3, 20)
+
+    if {start, end} == {"Phuket", "Koh Lanta"}:
+        return build_route("快艇/面包车联运", 5, 30)
+
+    if {start, end} == {"Phi Phi Islands", "Koh Lanta"}:
+        return build_route("快艇", 3, 25)
+
+    if {start, end} == {"Koh Lanta", "Koh Lipe"}:
+        return build_route("季节快艇", 4, 30)
+
+    andaman_clusters = {"andaman-airport", "andaman-island"}
+    if start_cluster in andaman_clusters and end_cluster in andaman_clusters:
+        return build_route("船运/面包车联运", 5, 30)
+
+    if "Koh Lipe" in {start, end}:
+        other = end if start == "Koh Lipe" else start
+        other_meta = CITY_ROUTE_META[other]
+        if other_meta["has_practical_airport"]:
+            return build_route(f"飞到 {CITY_ROUTE_META['Koh Lipe']['gateway']} + 车船联运", 11, 55)
+        return build_route("陆路到网关 + 车船联运", 13, 55)
+
+    if "Phi Phi Islands" in {start, end}:
+        other = end if start == "Phi Phi Islands" else start
+        other_meta = CITY_ROUTE_META[other]
+        if other_meta["cluster"] == "andaman-airport":
+            return build_route("快艇/渡轮", 2, 20)
+        if other_meta["has_practical_airport"]:
+            return build_route(f"飞到 {CITY_ROUTE_META['Phi Phi Islands']['gateway']} + 快艇", 8, 40)
+        return build_route("陆路到网关 + 快艇", 10, 45)
+
+    if "Koh Lanta" in {start, end}:
+        other = end if start == "Koh Lanta" else start
+        other_meta = CITY_ROUTE_META[other]
+        if other_meta["cluster"] == "andaman-airport":
+            return build_route("面包车/渡轮联运", 3, 20)
+        if other_meta["has_practical_airport"]:
+            return build_route(f"飞到 {CITY_ROUTE_META['Koh Lanta']['gateway']} + 渡轮", 8, 40)
+        return build_route("陆路到网关 + 渡轮", 10, 45)
+
+    if "Hua Hin" in {start, end}:
+        other = end if start == "Hua Hin" else start
+        other_meta = CITY_ROUTE_META[other]
+        if other_meta["has_practical_airport"]:
+            return build_route("公路到曼谷 + 飞机", 7, 35)
+        return build_route("火车/大巴联运", 8, 35)
+
+    if {start, end} == {"Bangkok", "Chiang Mai"}:
+        return build_route("飞机", 4, 25)
+
+    if {start, end} == {"Bangkok", "Phuket"}:
+        return build_route("飞机", 4, 25)
+
+    if {start, end} == {"Bangkok", "Krabi"}:
+        return build_route("飞机", 4, 25)
+
+    if {start, end} == {"Bangkok", "Koh Samui"}:
+        return build_route("飞机", 4, 25)
+
+    if {start, end} == {"Chiang Mai", "Phuket"}:
+        return build_route("飞机", 3, 20)
+
+    if {start, end} == {"Chiang Mai", "Krabi"}:
+        return build_route("飞机", 4, 25)
+
+    if {start, end} == {"Chiang Mai", "Koh Samui"}:
+        return build_route("飞机", 4, 25)
+
+    if {start, end} == {"Pattaya", "Chiang Mai"}:
+        return build_route("飞机/夜巴", 5, 30)
+
+    if {start, end} == {"Pattaya", "Phuket"}:
+        return build_route("飞机", 4, 25)
+
+    if {start, end} == {"Pattaya", "Krabi"}:
+        return build_route("飞机", 5, 30)
+
+    if {start, end} == {"Pattaya", "Koh Samui"}:
+        return build_route("飞机", 5, 30)
+
+    if {start, end} == {"Chiang Mai", "Pattaya"}:
+        return build_route("飞机/夜巴", 5, 30)
+
+    if "Koh Samui" in {start, end}:
+        other = end if start == "Koh Samui" else start
+        other_meta = CITY_ROUTE_META[other]
+        if other_meta["cluster"] in andaman_clusters:
+            return build_route("飞机到 Phuket/Krabi + 船/面包车", 7, 40)
+        if other_meta["has_practical_airport"]:
+            return build_route("飞机", 4, 25)
+        return build_route("飞机 + 公路联运", 8, 40)
+
+    if start_meta["has_practical_airport"] and end_meta["has_practical_airport"]:
+        return build_route("飞机/联运", 5, 30)
+
+    if start_meta["has_practical_airport"] or end_meta["has_practical_airport"]:
+        destination_gateway = end_meta["gateway"] if not end_meta["has_practical_airport"] else start_meta["gateway"]
+        return build_route(f"飞到 {destination_gateway} + 接驳", 8, 40)
+
+    return build_route("公路/联运", 9, 40)
+
+
+TRAVEL_ROUTES = {city: {} for city in GAME_DATA}
+for start in GAME_DATA:
+    for end in GAME_DATA:
         if start == end:
             continue
-
-        mode = "飞机/大巴联程"
-        time = TIME_FAR
-        stamina = STAMINA_TIRED
-
-        if "Bangkok" in [start, end]:
-            other = end if start == "Bangkok" else start
-            if other in ["Pattaya", "Hua Hin"]:
-                mode = "大巴/小巴"
-                time = TIME_NEAR + 1
-                stamina = STAMINA_EASY
-            elif other in ["Chiang Mai", "Phuket", "Krabi", "Koh Samui"]:
-                mode = "飞机"
-                time = 4
-                stamina = 25
-            elif other == "Koh Lipe":
-                mode = "飞机+车船"
-                time = 9
-                stamina = 50
-            elif other in ["Phi Phi Islands", "Koh Lanta"]:
-                mode = "飞机+船"
-                time = 7
-                stamina = 40
-
-        elif "Chiang Mai" in [start, end]:
-            other = end if start == "Chiang Mai" else start
-            if other == "Phuket":
-                mode = "直飞"
-                time = 3
-                stamina = 20
-            elif other == "Koh Lipe":
-                mode = "飞机+转机+车船"
-                time = TIME_EXTREME
-                stamina = STAMINA_DYING
-            else:
-                mode = "飞机+车船联运"
-                time = 10
-                stamina = 45
-
-        andaman_group = ["Phuket", "Krabi", "Phi Phi Islands", "Koh Lanta"]
-        if start in andaman_group and end in andaman_group:
-            mode = "快艇/渡轮"
-            time = 3
-            stamina = 20
-            if "Phi Phi Islands" in [start, end]:
-                time = 2
-
-        elif "Koh Samui" in [start, end]:
-            other = end if start == "Koh Samui" else start
-            if other in andaman_group:
-                mode = "飞机/车船联运"
-                time = 6
-                stamina = 35
-
-        elif "Koh Lipe" in [start, end]:
-            other = end if start == "Koh Lipe" else start
-            if other == "Koh Lanta":
-                mode = "时季快艇"
-                time = 4
-                stamina = 30
-            else:
-                mode = "长途转运"
-                time = 12
-                stamina = 55
-
-        TRAVEL_ROUTES[start][end] = {
-            "mode": mode,
-            "cost_time": time,
-            "cost_stamina": stamina,
-        }
-
-TRAVEL_ROUTES["Pattaya"]["Hua Hin"] = {"mode": "皇家渡轮", "cost_time": 2, "cost_stamina": 15}
-TRAVEL_ROUTES["Hua Hin"]["Pattaya"] = {"mode": "皇家渡轮", "cost_time": 2, "cost_stamina": 15}
+        TRAVEL_ROUTES[start][end] = derive_route(start, end)
