@@ -471,6 +471,7 @@ with st.sidebar:
     st.subheader(f"🔋 {player['stamina']}/100")
     st.divider()
     st.markdown("🎵 **BGM**")
+    st.caption(f"当前氛围：{GAME_DATA[current_city]['name_cn']} · {time_label}")
     auto_play = st.toggle("自动播放", value=True)
     st.audio(bgm_url, start_time=0, autoplay=auto_play, loop=True)
     st.divider()
