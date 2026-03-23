@@ -302,6 +302,60 @@ st.markdown(
         color: rgba(255,255,255,0.82) !important;
         line-height: 1.7;
     }}
+    .journal-shelf {{
+        display: grid;
+        gap: 16px;
+        margin-top: 12px;
+    }}
+    .journal-tile {{
+        background: linear-gradient(180deg, rgba(14, 24, 35, 0.82), rgba(8, 14, 22, 0.9));
+        border: 1px solid rgba(255,255,255,0.12);
+        border-radius: 24px;
+        padding: 18px;
+        box-shadow: 0 18px 40px rgba(0,0,0,0.28);
+    }}
+    .journal-meta {{
+        color: rgba(255,255,255,0.74) !important;
+        font-size: 14px;
+        line-height: 1.7;
+    }}
+    .journal-title {{
+        font-size: 22px;
+        font-weight: 700;
+        margin-bottom: 8px;
+        color: #FFD166 !important;
+        text-shadow: none !important;
+    }}
+    .journal-route {{
+        font-size: 15px;
+        color: rgba(255,255,255,0.88) !important;
+        margin-top: 10px;
+        line-height: 1.7;
+    }}
+    .journal-summary {{
+        font-size: 15px;
+        color: rgba(255,255,255,0.8) !important;
+        line-height: 1.8;
+        margin-top: 8px;
+    }}
+    .journal-detail-card {{
+        background: linear-gradient(180deg, rgba(245, 239, 227, 0.98), rgba(239, 232, 216, 0.98));
+        border-radius: 24px;
+        padding: 24px;
+        border: 1px solid rgba(0,0,0,0.08);
+        box-shadow: 0 16px 36px rgba(0,0,0,0.14);
+    }}
+    .journal-detail-card * {{
+        color: #2c2c2c !important;
+        text-shadow: none !important;
+    }}
+    .timeline-note {{
+        padding: 10px 14px;
+        border-left: 3px solid #e76f51;
+        background: rgba(255,255,255,0.5);
+        border-radius: 10px;
+        margin-bottom: 8px;
+    }}
     @media (max-width: 900px) {{
         .hero-card {{
             padding: 26px;
@@ -436,15 +490,23 @@ if st.session_state.get("player") is None:
     if not journals:
         st.caption("还没有已归档的旅行路书。完成一次旅程后，这里会自动出现你的旅行纪念册。")
     else:
+        st.markdown('<div class="journal-shelf">', unsafe_allow_html=True)
         for journal in journals:
+            route_text = " → ".join(journal["route_path"])
+            st.markdown(
+                f"""
+                <div class="journal-tile">
+                    <div class="journal-title">{journal['title']}</div>
+                    <div class="journal-meta">{journal['saved_at']} · {journal['days']} 天 · {journal['activity_count']} 个活动 · 终点 {journal['final_city']}</div>
+                    <div class="journal-route">路线：{route_text}</div>
+                    <div class="journal-summary">{journal['summary']}</div>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
             main_col, open_col, delete_col = st.columns([5, 1, 1])
             with main_col:
-                st.markdown(f"**{journal['title']}**")
-                st.caption(
-                    f"{journal['saved_at']} · {journal['days']} 天 · "
-                    f"{journal['activity_count']} 个活动 · 终点 {journal['final_city']}"
-                )
-                st.caption(journal["summary"])
+                st.caption(f"这本路书共经过 {journal.get('route_count', len(journal['route_path']))} 段城市节点。")
             with open_col:
                 if st.button("读取", key=f"open_journal_{journal['id']}", use_container_width=True):
                     st.session_state["selected_journal_id"] = journal["id"]
@@ -455,14 +517,17 @@ if st.session_state.get("player") is None:
                         st.session_state.pop("selected_journal_id", None)
                     st.rerun()
             st.markdown("---")
+        st.markdown("</div>", unsafe_allow_html=True)
 
         selected_journal_id = st.session_state.get("selected_journal_id")
         if selected_journal_id:
             selected = next((item for item in journals if item["id"] == selected_journal_id), None)
             if selected:
                 with st.expander("📖 路书详情", expanded=True):
+                    st.markdown('<div class="journal-detail-card">', unsafe_allow_html=True)
                     if selected.get("cover_image_url"):
                         st.image(selected["cover_image_url"], use_container_width=True)
+                    st.markdown(f"### {selected['title']}")
                     st.markdown(f"**结局**：{selected['outcome']}")
                     st.markdown(f"**总结**：{selected['summary']}")
                     st.markdown(f"**路线**：{' → '.join(selected['route_path'])}")
@@ -475,7 +540,8 @@ if st.session_state.get("player") is None:
                         st.caption("这趟旅程没有留下活动打卡记录。")
                     st.markdown("**时间线**")
                     for line in selected["history"][:12]:
-                        st.caption(line)
+                        st.markdown(f'<div class="timeline-note">{line}</div>', unsafe_allow_html=True)
+                    st.markdown("</div>", unsafe_allow_html=True)
 
     if start_clicked:
         with st.spinner("AI 正在准备行程数据..."):
@@ -842,6 +908,15 @@ if player["game_over"]:
         .journal-card ul {{
             padding-left: 20px;
         }}
+        .route-chip {{
+            display: inline-block;
+            margin: 4px 6px 4px 0;
+            padding: 8px 12px;
+            border-radius: 999px;
+            background: rgba(231, 111, 81, 0.12);
+            color: #8a3b26 !important;
+            font-weight: 700;
+        }}
     </style>
     """,
         unsafe_allow_html=True,
@@ -854,6 +929,9 @@ if player["game_over"]:
         active_journal = next((item for item in journals if item["id"] == active_journal_id), None)
 
     route_text = " → ".join(active_journal["route_path"]) if active_journal else GAME_DATA[current_city]["name_cn"]
+    route_chips = ""
+    if active_journal:
+        route_chips = "".join(f'<span class="route-chip">{name}</span>' for name in active_journal["route_path"])
     activities_html = ""
     if active_journal and active_journal["activities"]:
         activities_html = "".join(
@@ -875,7 +953,8 @@ if player["game_over"]:
         </div>
         <div class="journal-card">
             <h3>📖 本次路书摘要</h3>
-            <p><strong>路线</strong>：{route_text}</p>
+            <p><strong>路线</strong></p>
+            <div>{route_chips or route_text}</div>
             <p><strong>总结</strong>：{active_journal['summary'] if active_journal else player['fail_reason']}</p>
             <p><strong>精选片段</strong></p>
             <ul>{activities_html}</ul>

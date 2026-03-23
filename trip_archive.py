@@ -60,6 +60,7 @@ def build_trip_journal(player, cover_image_url=""):
         "id": str(uuid.uuid4()),
         "saved_at": datetime.now().isoformat(timespec="seconds"),
         "title": f"{route_path_names[0] if route_path_names else '泰国旅程'} · {outcome}",
+        "route_count": max(len(unique_route_names), 1),
         "outcome": outcome,
         "cover_image_url": cover_image_url,
         "fail_reason": player.get("fail_reason", ""),
