@@ -1,7 +1,7 @@
 import streamlit as st
 
 from ai_manager import ai_bot
-from data_store import GAME_DATA
+from data_store import GAME_DATA, activity_is_available, activity_time_label
 from game_state import game
 from travel_realtime import (
     build_realtime_flight_plan,
@@ -540,14 +540,7 @@ with t1:
         if act["type"] == "scenic" and act["id"] in player["visited_activities"]:
             continue
 
-        if act["type"] == "scenic":
-            is_open = 8 <= curr_h < 17
-        elif act["type"] == "night":
-            is_open = curr_h >= 18
-        else:
-            is_open = 8 <= curr_h < 22
-
-        if is_open:
+        if activity_is_available(act, curr_h):
             valid_acts.append(act)
 
     if not valid_acts:
@@ -557,7 +550,12 @@ with t1:
         c_info, c_btn = st.columns([3, 1])
         with c_info:
             st.markdown(f"**{act['name']}**")
-            st.caption(f"💰 {act['cost_money']} | ⏰ {act['cost_time']}h | 🔋 {act['cost_stamina']}")
+            st.caption(
+                f"💰 {act['cost_money']} | ⏰ {act['cost_time']}h | 🔋 {act['cost_stamina']} | "
+                f"🕒 {activity_time_label(act)}"
+            )
+            if act.get("time_note"):
+                st.caption(f"备注：{act['time_note']}")
         with c_btn:
             st.write("")
             if st.button("Go", key=f"go_{act['id']}", use_container_width=True):

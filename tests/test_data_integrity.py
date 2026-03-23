@@ -14,12 +14,31 @@ class TravelSimulatorDataTests(unittest.TestCase):
                 self.assertGreater(len(activities), 0)
 
     def test_activities_have_required_fields(self):
-        required_fields = {"id", "name", "desc", "cost_money", "cost_stamina", "cost_time", "type"}
+        required_fields = {
+            "id",
+            "name",
+            "desc",
+            "cost_money",
+            "cost_stamina",
+            "cost_time",
+            "type",
+            "start_window",
+        }
 
         for city, city_data in GAME_DATA.items():
             for activity in city_data["activities"]:
                 with self.subTest(city=city, activity=activity.get("id")):
                     self.assertTrue(required_fields.issubset(activity.keys()))
+
+    def test_activity_start_windows_are_valid(self):
+        for city, city_data in GAME_DATA.items():
+            for activity in city_data["activities"]:
+                with self.subTest(city=city, activity=activity.get("id")):
+                    start_hour, latest_start = activity["start_window"]
+                    self.assertGreaterEqual(start_hour, 0)
+                    self.assertLessEqual(start_hour, 23)
+                    self.assertGreaterEqual(latest_start, start_hour)
+                    self.assertLessEqual(latest_start, 23)
 
     def test_travel_routes_exist_between_distinct_cities(self):
         cities = set(GAME_DATA)
