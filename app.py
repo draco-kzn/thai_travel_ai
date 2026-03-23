@@ -50,7 +50,7 @@ if st.session_state.get("player"):
             st.session_state.bg_state_key = current_state_key
 
     bg_image = st.session_state.bg_image_url
-    bgm_url = ai_bot.get_bgm(current_city)
+    bgm_url = ai_bot.get_bgm(current_city, time_phase)
 else:
     bg_image = default_bg
     theme_color = "#7BD389"

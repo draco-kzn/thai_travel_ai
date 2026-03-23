@@ -164,21 +164,69 @@ class AIManager:
             print(f"生成结局图片失败: {exc}")
             return DEFAULT_ENDING_IMAGE
 
-    def get_bgm(self, city_name: str):
+    def get_bgm(self, city_name: str, time_phase: str = "noon"):
         bgm_library = {
-            "Bangkok": "https://cdn.pixabay.com/download/audio/2022/05/27/audio_1808fbf07a.mp3",
-            "Chiang Mai": "https://cdn.pixabay.com/download/audio/2022/11/22/audio_febc508520.mp3",
-            "Pattaya": "https://cdn.pixabay.com/download/audio/2022/03/15/audio_12a79df404.mp3",
-            "Hua Hin": "https://cdn.pixabay.com/download/audio/2021/06/07/audio_cdfb955189.mp3",
-            "Phuket": "https://cdn.pixabay.com/download/audio/2022/03/09/audio_822ca01d29.mp3",
-            "Krabi": "https://cdn.pixabay.com/download/audio/2022/03/09/audio_eb16546260.mp3",
-            "Koh Samui": "https://cdn.pixabay.com/download/audio/2025/02/19/audio_99d82c4799.mp3",
-            "Phi Phi Islands": "https://cdn.pixabay.com/download/audio/2024/10/23/audio_5621af6dd3.mp3",
-            "Koh Lanta": "https://cdn.pixabay.com/download/audio/2021/10/23/audio_fa974e579a.mp3",
-            "Koh Lipe": "https://cdn.pixabay.com/download/audio/2022/01/18/audio_d0a13f69d2.mp3",
-            "default": "https://cdn.pixabay.com/download/audio/2022/01/18/audio_d0a13f69d2.mp3",
+            "Bangkok": {
+                "day": "https://cdn.pixabay.com/download/audio/2022/05/27/audio_1808fbf07a.mp3",
+                "night": "https://cdn.pixabay.com/download/audio/2022/01/18/audio_d0a13f69d2.mp3",
+            },
+            "Chiang Mai": {
+                "day": "https://cdn.pixabay.com/download/audio/2022/11/22/audio_febc508520.mp3",
+                "night": "https://cdn.pixabay.com/download/audio/2021/06/07/audio_cdfb955189.mp3",
+            },
+            "Pattaya": {
+                "day": "https://cdn.pixabay.com/download/audio/2022/03/15/audio_12a79df404.mp3",
+                "night": "https://cdn.pixabay.com/download/audio/2025/02/19/audio_99d82c4799.mp3",
+            },
+            "Hua Hin": {
+                "day": "https://cdn.pixabay.com/download/audio/2021/06/07/audio_cdfb955189.mp3",
+                "night": "https://cdn.pixabay.com/download/audio/2021/10/23/audio_fa974e579a.mp3",
+            },
+            "Phuket": {
+                "day": "https://cdn.pixabay.com/download/audio/2022/03/09/audio_822ca01d29.mp3",
+                "sunset": "https://cdn.pixabay.com/download/audio/2024/10/23/audio_5621af6dd3.mp3",
+                "night": "https://cdn.pixabay.com/download/audio/2025/02/19/audio_99d82c4799.mp3",
+            },
+            "Krabi": {
+                "day": "https://cdn.pixabay.com/download/audio/2022/03/09/audio_eb16546260.mp3",
+                "sunset": "https://cdn.pixabay.com/download/audio/2021/10/23/audio_fa974e579a.mp3",
+                "night": "https://cdn.pixabay.com/download/audio/2021/06/07/audio_cdfb955189.mp3",
+            },
+            "Koh Samui": {
+                "day": "https://cdn.pixabay.com/download/audio/2025/02/19/audio_99d82c4799.mp3",
+                "sunset": "https://cdn.pixabay.com/download/audio/2024/10/23/audio_5621af6dd3.mp3",
+                "night": "https://cdn.pixabay.com/download/audio/2022/01/18/audio_d0a13f69d2.mp3",
+            },
+            "Phi Phi Islands": {
+                "day": "https://cdn.pixabay.com/download/audio/2024/10/23/audio_5621af6dd3.mp3",
+                "sunset": "https://cdn.pixabay.com/download/audio/2021/10/23/audio_fa974e579a.mp3",
+                "night": "https://cdn.pixabay.com/download/audio/2022/01/18/audio_d0a13f69d2.mp3",
+            },
+            "Koh Lanta": {
+                "day": "https://cdn.pixabay.com/download/audio/2021/10/23/audio_fa974e579a.mp3",
+                "sunset": "https://cdn.pixabay.com/download/audio/2024/10/23/audio_5621af6dd3.mp3",
+                "night": "https://cdn.pixabay.com/download/audio/2021/06/07/audio_cdfb955189.mp3",
+            },
+            "Koh Lipe": {
+                "day": "https://cdn.pixabay.com/download/audio/2022/01/18/audio_d0a13f69d2.mp3",
+                "sunset": "https://cdn.pixabay.com/download/audio/2024/10/23/audio_5621af6dd3.mp3",
+                "night": "https://cdn.pixabay.com/download/audio/2025/02/19/audio_99d82c4799.mp3",
+            },
+            "default": {
+                "day": "https://cdn.pixabay.com/download/audio/2022/01/18/audio_d0a13f69d2.mp3",
+                "night": "https://cdn.pixabay.com/download/audio/2021/06/07/audio_cdfb955189.mp3",
+            },
         }
-        return bgm_library.get(city_name, bgm_library["default"])
+        city_tracks = bgm_library.get(city_name, bgm_library["default"])
+        if time_phase in city_tracks:
+            return city_tracks[time_phase]
+        if time_phase in {"morning", "noon"} and "day" in city_tracks:
+            return city_tracks["day"]
+        if time_phase == "sunset" and "sunset" in city_tracks:
+            return city_tracks["sunset"]
+        if time_phase == "night" and "night" in city_tracks:
+            return city_tracks["night"]
+        return city_tracks.get("day") or city_tracks.get("night") or bgm_library["default"]["day"]
 
 
 ai_bot = AIManager()

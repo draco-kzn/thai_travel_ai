@@ -11,7 +11,7 @@ class AIManagerTests(unittest.TestCase):
         with patch.object(ai_manager, "st", fake_st):
             manager = ai_manager.AIManager()
             bgm_by_city = {
-                city: manager.get_bgm(city)
+                city: manager.get_bgm(city, "noon")
                 for city in [
                     "Bangkok",
                     "Chiang Mai",
@@ -32,6 +32,19 @@ class AIManagerTests(unittest.TestCase):
             with self.subTest(city=city):
                 self.assertTrue(url.startswith("https://"))
                 self.assertTrue(url.endswith(".mp3"))
+
+    def test_bgm_changes_by_time_phase_for_multiple_cities(self):
+        fake_st = SimpleNamespace(session_state={})
+        with patch.object(ai_manager, "st", fake_st):
+            manager = ai_manager.AIManager()
+            changed_cities = 0
+            for city in ["Bangkok", "Pattaya", "Phuket", "Koh Samui", "Koh Lipe"]:
+                day_track = manager.get_bgm(city, "noon")
+                night_track = manager.get_bgm(city, "night")
+                if day_track != night_track:
+                    changed_cities += 1
+
+        self.assertGreaterEqual(changed_cities, 4)
 
 
 if __name__ == "__main__":
