@@ -454,10 +454,8 @@ with st.sidebar:
     st.audio(bgm_url, start_time=0, autoplay=auto_play, loop=True)
     st.divider()
     if st.button("🔁 重新开始游戏", use_container_width=True):
-        st.session_state.player = None
+        game.reset_game()
         st.session_state["rules_accepted"] = False
-        st.session_state.pop("bg_image_url", None)
-        st.session_state.pop("bg_state_key", None)
         st.rerun()
 
 
@@ -472,9 +470,7 @@ if player["time"] == 8 and not player["hotel_settled"]:
                 key=f"h_{i}",
                 use_container_width=True,
             ):
-                if player["money"] >= hotel["price"]:
-                    game._update(money=hotel["price"], time=1)
-                    player["hotel_settled"] = True
+                if game.settle_hotel(hotel):
                     st.rerun()
                 else:
                     st.toast("余额不够，换一家吧。")
@@ -651,9 +647,7 @@ if player["game_over"]:
     _, center_restart, _ = st.columns([1, 1, 1])
     with center_restart:
         if st.button("🔁 开启新旅程", type="primary", use_container_width=True):
-            st.session_state.player = None
+            game.reset_game()
             st.session_state["rules_accepted"] = False
-            st.session_state.pop("bg_image_url", None)
-            st.session_state.pop("bg_state_key", None)
             st.rerun()
     st.stop()
