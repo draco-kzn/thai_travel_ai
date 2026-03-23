@@ -176,27 +176,30 @@ st.markdown(
         margin-top: 5px;
     }}
     .rules-card {{
-        background: rgba(0, 0, 0, 0.84);
-        border: 1px solid rgba(255,255,255,0.18);
+        background:
+            linear-gradient(180deg, rgba(255, 248, 238, 0.92), rgba(246, 238, 224, 0.88));
+        border: 1px solid rgba(255,255,255,0.45);
         border-radius: 28px;
         padding: 40px;
         margin: 8vh auto 1.5rem;
         max-width: 760px;
         text-align: center;
-        backdrop-filter: blur(14px);
-        box-shadow: 0 24px 60px rgba(0,0,0,0.55);
+        backdrop-filter: blur(18px);
+        box-shadow: 0 28px 60px rgba(0,0,0,0.32);
     }}
     .rules-title {{
         font-size: 36px;
         margin-bottom: 12px;
-        color: #FFD166 !important;
+        color: #c96d2d !important;
+        text-shadow: none !important;
     }}
     .rules-subtitle {{
         max-width: 560px;
         margin: 0 auto 24px;
-        color: rgba(255,255,255,0.82) !important;
+        color: rgba(52, 44, 33, 0.82) !important;
         font-size: 17px;
         line-height: 1.7;
+        text-shadow: none !important;
     }}
     .rules-list {{
         text-align: left;
@@ -206,10 +209,12 @@ st.markdown(
         gap: 12px;
     }}
     .rule-item {{
-        background: rgba(255,255,255,0.08);
-        border: 1px solid rgba(255,255,255,0.08);
+        background: rgba(255,255,255,0.42);
+        border: 1px solid rgba(201, 109, 45, 0.12);
         border-radius: 18px;
         padding: 14px 16px;
+        color: #31271d !important;
+        text-shadow: none !important;
     }}
     .entry-shell {{
         max-width: 1180px;
