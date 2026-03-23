@@ -65,6 +65,27 @@ streamlit run app.py
 
 浏览器打开后，就可以直接开始旅行模拟。
 
+## 部署到 Streamlit Community Cloud
+
+这个仓库已经整理成适合直接部署到 Streamlit Community Cloud 的结构了：
+
+- Repository: `draco-kzn/thai_travel_ai`
+- Branch: `main`
+- Main file path: `app.py`
+
+部署时还需要在 Streamlit Cloud 的 `Secrets` 里配置：
+
+```toml
+ZHIPUAI_API_KEY="your_api_key_here"
+```
+
+如果不配这个密钥，应用也能启动，但会退化成默认天气和默认图片模式。
+
+根据 Streamlit 官方文档，Community Cloud 会直接从 GitHub 读取仓库，之后你每次推送到仓库，应用会自动更新；如果改动了 `requirements.txt`，它会做一次完整重部署。参考：
+
+- [Welcome to Streamlit Community Cloud](https://docs.streamlit.io/deploy/streamlit-community-cloud)
+- [Manage your app](https://docs.streamlit.io/deploy/streamlit-community-cloud/manage-your-app)
+
 ## 测试
 
 项目现在补了一组最基础的数据完整性测试，不依赖额外测试框架，可以直接运行：
