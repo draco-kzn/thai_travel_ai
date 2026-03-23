@@ -137,6 +137,8 @@ python -m unittest discover -s tests
   - `Phi Phi Islands -> Phuket gateway`
   - `Koh Lanta -> Krabi gateway`
   - `Koh Lipe -> Hat Yai gateway`
+- 像 `Phi Phi Islands -> Phuket` 这种本质上是船运 / 接驳的路线，不会伪装成“有直飞机票”
+- 像 `Bangkok -> Phi Phi Islands` 这种路线，会明确显示成 `航班到网关 + 船上岛`
 
 这样做的好处是游戏体验不会被外部接口完全绑死，但你仍然可以看到更接近真实世界的酒店和机票价格。
 

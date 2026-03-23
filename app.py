@@ -4,6 +4,7 @@ from ai_manager import ai_bot
 from data_store import GAME_DATA
 from game_state import game
 from travel_realtime import (
+    build_realtime_flight_plan,
     format_date_for_api,
     get_city_realtime_meta,
     has_amadeus_credentials,
@@ -596,26 +597,25 @@ with t2:
                 format_func=lambda city: GAME_DATA[city]["name_cn"],
                 key=f"live_target_{current_city}",
             )
-            origin_meta = get_city_realtime_meta(current_city)
-            destination_meta = get_city_realtime_meta(live_target)
             trip_date = infer_trip_date(player["month"], player["day"])
+            flight_plan = build_realtime_flight_plan(current_city, live_target)
 
-            if origin_meta and destination_meta:
-                st.caption(
-                    f"{origin_meta['airport_label']} -> {destination_meta['airport_label']} · "
-                    f"{format_date_for_api(trip_date)}"
-                )
-                st.caption(origin_meta["flight_note"])
-                if destination_meta["flight_note"] != origin_meta["flight_note"]:
-                    st.caption(destination_meta["flight_note"])
+            st.markdown(f"**{flight_plan['title']}**")
+            st.caption(f"计划出发日：{format_date_for_api(trip_date)}")
+            for note in flight_plan.get("notes", []):
+                st.caption(note)
 
-                if origin_meta["airport_code"] == destination_meta["airport_code"]:
-                    st.warning("这条路线通常不是纯航班段，实时机票参考暂不适用。")
-                elif st.button("刷新实时机票", key=f"live_flight_{current_city}_{live_target}", use_container_width=True):
+            if flight_plan["queryable"]:
+                if flight_plan["kind"] == "direct_flight":
+                    st.info("这是一段可以直接查机票的城市间航线。")
+                else:
+                    st.info("这是一段“航班 + 船/地面接驳”的组合路线，实时机票只覆盖其中的飞行段。")
+
+                if st.button("刷新实时机票", key=f"live_flight_{current_city}_{live_target}", use_container_width=True):
                     with st.spinner("正在查询实时航班报价..."):
                         st.session_state["live_flight_results"] = search_live_flights(
-                            origin_meta["airport_code"],
-                            destination_meta["airport_code"],
+                            flight_plan["origin_code"],
+                            flight_plan["destination_code"],
                             format_date_for_api(trip_date),
                         )
                         st.session_state["live_flight_query"] = (
@@ -630,16 +630,33 @@ with t2:
                     elif not flight_result["data"]:
                         st.info("当前没有拿到可展示的实时航班报价。")
                     else:
-                        st.caption("以下价格为实时参考价，最终出票前通常还需要再次校验。")
-                        for item in flight_result["data"]:
-                            st.markdown(f"**{item['price']} {item['currency']} · {item['carrier']}**")
+                        st.caption("以下价格是实时参考价；如果这条路线含船或地面接驳，接驳成本不在机票价格里。")
+                        sorted_results = sorted(
+                            flight_result["data"],
+                            key=lambda item: (float(item["price"]), item["stops"])
+                            if str(item["price"]).replace(".", "", 1).isdigit()
+                            else (999999.0, item["stops"]),
+                        )
+                        cheapest = sorted_results[0]
+                        fastest = min(sorted_results, key=lambda item: item.get("duration_minutes", 10**9))
+                        fewest_stops = min(sorted_results, key=lambda item: item["stops"])
+
+                        for item in sorted_results:
+                            badges = []
+                            if item == cheapest:
+                                badges.append("最低价")
+                            if item == fastest:
+                                badges.append("最快")
+                            if item == fewest_stops:
+                                badges.append("最少中转")
+
+                            badge_text = f" · {' / '.join(badges)}" if badges else ""
+                            st.markdown(f"**{item['price']} {item['currency']} · {item['carrier']}{badge_text}**")
                             st.caption(
                                 f"{item['departure']} -> {item['arrival']} · "
                                 f"{item['duration']} · 中转 {item['stops']} 次"
                             )
                             st.markdown("---")
-            else:
-                st.warning("当前路线缺少实时机场映射，暂时无法查询。")
 
     for tgt, info in moves.items():
         mode = info["mode"]
