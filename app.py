@@ -135,37 +135,39 @@ st.markdown(
         box-shadow: 0 20px 42px rgba(231, 111, 81, 0.4);
     }}
     div[data-testid="stForm"] {{
-        background: linear-gradient(180deg, rgba(9, 18, 27, 0.78), rgba(4, 10, 20, 0.84));
-        border: 1px solid rgba(255,255,255,0.14);
+        background: linear-gradient(180deg, rgba(248, 242, 231, 0.9), rgba(232, 221, 204, 0.84));
+        border: 1px solid rgba(255,255,255,0.42);
         border-radius: 28px;
         padding: 22px 22px 12px;
-        backdrop-filter: blur(14px);
-        box-shadow: 0 18px 50px rgba(0,0,0,0.35);
+        backdrop-filter: blur(18px);
+        box-shadow: 0 18px 50px rgba(0,0,0,0.18);
     }}
     div[data-testid="stForm"] label,
     div[data-testid="stForm"] p,
     div[data-testid="stForm"] span,
     div[data-testid="stForm"] div {{
-        color: white !important;
+        color: #17334a !important;
+        text-shadow: none !important;
     }}
     div[data-testid="stForm"] [data-baseweb="select"] > div,
     div[data-testid="stForm"] [data-testid="stNumberInput"] > div,
     div[data-testid="stForm"] [data-testid="stTextInput"] > div {{
-        background: rgba(16, 37, 56, 0.92) !important;
-        border: 1px solid rgba(255,255,255,0.08) !important;
-        box-shadow: none !important;
+        background: rgba(255, 250, 242, 0.8) !important;
+        border: 1px solid rgba(201, 109, 45, 0.12) !important;
+        box-shadow: inset 0 1px 0 rgba(255,255,255,0.5);
     }}
     div[data-testid="stForm"] input,
     div[data-testid="stForm"] [data-baseweb="select"] input,
     div[data-testid="stForm"] [data-baseweb="select"] span {{
-        color: white !important;
+        color: #17334a !important;
+        text-shadow: none !important;
     }}
     div[data-testid="stForm"] [data-testid="stSlider"] [role="slider"] {{
         background: #ffd166 !important;
         border-color: #ffd166 !important;
     }}
     div[data-testid="stForm"] [data-testid="stSlider"] div[data-baseweb="slider"] > div > div {{
-        background: rgba(255,255,255,0.22) !important;
+        background: rgba(23, 51, 74, 0.22) !important;
     }}
     div[data-testid="stExpander"] {{
         background: rgba(0,0,0,0.45);
@@ -246,12 +248,12 @@ st.markdown(
         margin: 3vh auto 0;
     }}
     .hero-card {{
-        background: linear-gradient(155deg, rgba(8, 29, 43, 0.78), rgba(4, 10, 20, 0.88));
-        border: 1px solid rgba(255,255,255,0.16);
+        background: linear-gradient(155deg, rgba(248, 242, 231, 0.9), rgba(231, 220, 202, 0.82));
+        border: 1px solid rgba(255,255,255,0.44);
         border-radius: 28px;
         padding: 36px;
-        backdrop-filter: blur(16px);
-        box-shadow: 0 24px 60px rgba(0,0,0,0.45);
+        backdrop-filter: blur(18px);
+        box-shadow: 0 24px 60px rgba(0,0,0,0.22);
         min-height: 100%;
     }}
     .hero-eyebrow {{
@@ -259,10 +261,10 @@ st.markdown(
         align-items: center;
         gap: 8px;
         padding: 8px 14px;
-        background: rgba(255, 209, 102, 0.14);
-        border: 1px solid rgba(255, 209, 102, 0.28);
+        background: rgba(22, 50, 71, 0.08);
+        border: 1px solid rgba(201, 109, 45, 0.24);
         border-radius: 999px;
-        color: #FFD166 !important;
+        color: #b45f29 !important;
         font-size: 13px;
         font-weight: 700;
         letter-spacing: 0.06em;
@@ -276,10 +278,11 @@ st.markdown(
     }}
     .hero-subtitle {{
         max-width: 620px;
-        color: rgba(255,255,255,0.86) !important;
+        color: rgba(27, 47, 64, 0.9) !important;
         font-size: 1.05rem;
         line-height: 1.8;
         margin-bottom: 24px;
+        text-shadow: none !important;
     }}
     .hero-pills {{
         display: flex;
@@ -290,10 +293,11 @@ st.markdown(
     .hero-pill {{
         padding: 10px 14px;
         border-radius: 999px;
-        background: rgba(255,255,255,0.1);
-        border: 1px solid rgba(255,255,255,0.12);
-        color: #F6F7EB !important;
+        background: rgba(255,255,255,0.38);
+        border: 1px solid rgba(255,255,255,0.4);
+        color: #17334a !important;
         font-size: 14px;
+        text-shadow: none !important;
     }}
     .hero-feature-grid {{
         display: grid;
@@ -302,38 +306,40 @@ st.markdown(
         margin-top: 18px;
     }}
     .hero-feature {{
-        background: rgba(255,255,255,0.08);
-        border: 1px solid rgba(255,255,255,0.08);
+        background: rgba(255,255,255,0.42);
+        border: 1px solid rgba(255,255,255,0.42);
         border-radius: 20px;
         padding: 16px;
     }}
     .hero-feature strong {{
         display: block;
         margin-bottom: 6px;
-        color: #FFD166 !important;
+        color: #c96d2d !important;
         text-shadow: none !important;
     }}
     .hero-feature {{
-        color: white !important;
+        color: #193247 !important;
+        text-shadow: none !important;
     }}
     .helper-card {{
         margin-top: 18px;
-        background: rgba(255,255,255,0.09);
-        border: 1px solid rgba(255,255,255,0.1);
+        background: rgba(247, 241, 230, 0.56);
+        border: 1px solid rgba(255,255,255,0.36);
         border-radius: 22px;
         padding: 18px 20px;
-        backdrop-filter: blur(12px);
+        backdrop-filter: blur(16px);
     }}
     .helper-title {{
         margin: 0 0 10px;
         font-size: 16px;
-        color: #FFD166 !important;
+        color: #c96d2d !important;
         text-shadow: none !important;
     }}
     .helper-copy {{
         margin: 0;
-        color: rgba(255,255,255,0.82) !important;
+        color: rgba(30, 47, 62, 0.9) !important;
         line-height: 1.7;
+        text-shadow: none !important;
     }}
     .journal-shelf {{
         display: grid;
