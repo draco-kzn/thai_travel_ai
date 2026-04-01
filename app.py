@@ -63,9 +63,9 @@ st.markdown(
 <style>
     .stApp {{
         background-image:
-            linear-gradient(rgba(3, 8, 17, 0.35), rgba(3, 8, 17, 0.68)),
-            radial-gradient(circle at top left, rgba(255, 209, 102, 0.18), transparent 30%),
-            radial-gradient(circle at right center, rgba(116, 192, 252, 0.14), transparent 24%),
+            linear-gradient(rgba(244, 248, 250, 0.18), rgba(231, 240, 244, 0.34)),
+            radial-gradient(circle at top left, rgba(255, 222, 164, 0.18), transparent 32%),
+            radial-gradient(circle at right center, rgba(158, 214, 245, 0.2), transparent 26%),
             url("{bg_image}");
         background-size: cover;
         background-position: center;
@@ -86,13 +86,14 @@ st.markdown(
         max-width: 1240px;
     }}
     [data-testid="stSidebar"] {{
-        background-color: rgba(0, 0, 0, 0.82);
-        border-right: 1px solid rgba(255,255,255,0.08);
+        background: linear-gradient(180deg, rgba(248, 244, 236, 0.82), rgba(241, 235, 223, 0.74));
+        border-right: 1px solid rgba(255,255,255,0.34);
         margin-top: 0 !important;
+        backdrop-filter: blur(18px);
     }}
     h1, h2, h3, h4, p, span, div, label, .stMarkdown {{
         color: #f8fafc !important;
-        text-shadow: 0 2px 4px rgba(0,0,0,0.45);
+        text-shadow: 0 2px 4px rgba(0,0,0,0.42);
     }}
     h1 {{
         margin-top: 0 !important;
@@ -104,16 +105,18 @@ st.markdown(
         border: none !important;
     }}
     .stButton > button {{
-        background: rgba(255, 255, 255, 0.14) !important;
-        color: white !important;
-        border: 1px solid rgba(255,255,255,0.32) !important;
-        backdrop-filter: blur(5px);
+        background: rgba(255, 255, 255, 0.18) !important;
+        color: #163247 !important;
+        border: 1px solid rgba(255,255,255,0.42) !important;
+        backdrop-filter: blur(10px);
         border-radius: 14px;
         transition: all 0.18s ease;
+        text-shadow: none !important;
+        box-shadow: 0 10px 24px rgba(0,0,0,0.08);
     }}
     .stButton > button:hover {{
-        background: rgba(255, 255, 255, 0.24) !important;
-        border-color: rgba(255,255,255,0.72) !important;
+        background: rgba(255, 255, 255, 0.3) !important;
+        border-color: rgba(255,255,255,0.62) !important;
         transform: translateY(-1px);
     }}
     .stButton > button[kind="primary"] {{
@@ -121,26 +124,26 @@ st.markdown(
         min-height: 56px;
         border: none !important;
         border-radius: 18px !important;
-        background: linear-gradient(135deg, #FFD166 0%, #F7C96D 36%, #F3A46F 72%, #EB7D56 100%) !important;
-        color: #151515 !important;
+        background: linear-gradient(135deg, #ffd46a 0%, #f4b97d 58%, #ef8d65 100%) !important;
+        color: #1d2f40 !important;
         font-weight: 800 !important;
-        box-shadow: 0 18px 35px rgba(231, 111, 81, 0.3);
+        box-shadow: 0 18px 35px rgba(239, 141, 101, 0.24);
         text-shadow: none !important;
     }}
     .stButton > button[kind="primary"] p {{
-        color: #151515 !important;
+        color: #1d2f40 !important;
         text-shadow: none !important;
     }}
     .stButton > button[kind="primary"]:hover {{
-        box-shadow: 0 20px 42px rgba(231, 111, 81, 0.4);
+        box-shadow: 0 20px 42px rgba(239, 141, 101, 0.32);
     }}
     div[data-testid="stForm"] {{
-        background: linear-gradient(180deg, rgba(248, 242, 231, 0.9), rgba(232, 221, 204, 0.84));
-        border: 1px solid rgba(255,255,255,0.42);
+        background: linear-gradient(180deg, rgba(249, 243, 231, 0.92), rgba(236, 226, 210, 0.86));
+        border: 1px solid rgba(255,255,255,0.48);
         border-radius: 28px;
         padding: 22px 22px 12px;
         backdrop-filter: blur(18px);
-        box-shadow: 0 18px 50px rgba(0,0,0,0.18);
+        box-shadow: 0 18px 50px rgba(0,0,0,0.16);
     }}
     div[data-testid="stForm"] label,
     div[data-testid="stForm"] p,
@@ -152,7 +155,7 @@ st.markdown(
     div[data-testid="stForm"] [data-baseweb="select"] > div,
     div[data-testid="stForm"] [data-testid="stNumberInput"] > div,
     div[data-testid="stForm"] [data-testid="stTextInput"] > div {{
-        background: rgba(255, 250, 242, 0.8) !important;
+        background: rgba(255, 250, 242, 0.82) !important;
         border: 1px solid rgba(201, 109, 45, 0.12) !important;
         box-shadow: inset 0 1px 0 rgba(255,255,255,0.5);
     }}
@@ -170,24 +173,27 @@ st.markdown(
         background: rgba(23, 51, 74, 0.22) !important;
     }}
     div[data-testid="stExpander"] {{
-        background: rgba(0,0,0,0.45);
-        border: 1px solid rgba(255,255,255,0.12);
+        background: linear-gradient(180deg, rgba(246, 241, 232, 0.54), rgba(236, 228, 214, 0.46));
+        border: 1px solid rgba(255,255,255,0.36);
         border-radius: 18px;
         overflow: hidden;
+        box-shadow: 0 12px 28px rgba(0,0,0,0.08);
     }}
     div[data-testid="stExpander"] details summary p {{
         font-weight: 600;
+        color: #17334a !important;
+        text-shadow: none !important;
     }}
     .time-capsule {{
-        background: rgba(0,0,0,0.58);
+        background: linear-gradient(180deg, rgba(249, 243, 231, 0.92), rgba(234, 225, 208, 0.84));
         border-left: 5px solid {theme_color};
         padding: 12px 20px;
         border-radius: 16px;
         display: inline-block;
         text-align: right;
-        backdrop-filter: blur(8px);
+        backdrop-filter: blur(14px);
         float: right;
-        box-shadow: 0 16px 32px rgba(0,0,0,0.28);
+        box-shadow: 0 16px 32px rgba(0,0,0,0.16);
     }}
     .time-big {{
         font-size: 32px;
@@ -199,20 +205,20 @@ st.markdown(
     }}
     .time-small {{
         font-size: 14px;
-        color: #ddd !important;
+        color: #36556b !important;
         margin-top: 5px;
+        text-shadow: none !important;
     }}
     .rules-card {{
-        background:
-            linear-gradient(180deg, rgba(255, 248, 238, 0.92), rgba(246, 238, 224, 0.88));
-        border: 1px solid rgba(255,255,255,0.45);
+        background: linear-gradient(180deg, rgba(255, 248, 238, 0.94), rgba(246, 238, 224, 0.9));
+        border: 1px solid rgba(255,255,255,0.48);
         border-radius: 28px;
         padding: 40px;
         margin: 8vh auto 1.5rem;
         max-width: 760px;
         text-align: center;
         backdrop-filter: blur(18px);
-        box-shadow: 0 28px 60px rgba(0,0,0,0.32);
+        box-shadow: 0 28px 60px rgba(0,0,0,0.22);
     }}
     .rules-title {{
         font-size: 36px;
@@ -236,7 +242,7 @@ st.markdown(
         gap: 12px;
     }}
     .rule-item {{
-        background: rgba(255,255,255,0.42);
+        background: rgba(255,255,255,0.48);
         border: 1px solid rgba(201, 109, 45, 0.12);
         border-radius: 18px;
         padding: 14px 16px;
@@ -248,12 +254,12 @@ st.markdown(
         margin: 3vh auto 0;
     }}
     .hero-card {{
-        background: linear-gradient(155deg, rgba(248, 242, 231, 0.9), rgba(231, 220, 202, 0.82));
-        border: 1px solid rgba(255,255,255,0.44);
+        background: linear-gradient(155deg, rgba(248, 242, 231, 0.92), rgba(231, 220, 202, 0.84));
+        border: 1px solid rgba(255,255,255,0.46);
         border-radius: 28px;
         padding: 36px;
         backdrop-filter: blur(18px);
-        box-shadow: 0 24px 60px rgba(0,0,0,0.22);
+        box-shadow: 0 24px 60px rgba(0,0,0,0.2);
         min-height: 100%;
     }}
     .hero-eyebrow {{
@@ -275,6 +281,8 @@ st.markdown(
         margin: 18px 0 14px;
         font-size: clamp(2.7rem, 4vw, 4.8rem);
         line-height: 0.95;
+        color: #17334a !important;
+        text-shadow: none !important;
     }}
     .hero-subtitle {{
         max-width: 620px;
@@ -293,8 +301,8 @@ st.markdown(
     .hero-pill {{
         padding: 10px 14px;
         border-radius: 999px;
-        background: rgba(255,255,255,0.38);
-        border: 1px solid rgba(255,255,255,0.4);
+        background: rgba(255,255,255,0.42);
+        border: 1px solid rgba(255,255,255,0.42);
         color: #17334a !important;
         font-size: 14px;
         text-shadow: none !important;
@@ -306,10 +314,12 @@ st.markdown(
         margin-top: 18px;
     }}
     .hero-feature {{
-        background: rgba(255,255,255,0.42);
-        border: 1px solid rgba(255,255,255,0.42);
+        background: rgba(255,255,255,0.48);
+        border: 1px solid rgba(255,255,255,0.46);
         border-radius: 20px;
         padding: 16px;
+        color: #193247 !important;
+        text-shadow: none !important;
     }}
     .hero-feature strong {{
         display: block;
@@ -317,14 +327,10 @@ st.markdown(
         color: #c96d2d !important;
         text-shadow: none !important;
     }}
-    .hero-feature {{
-        color: #193247 !important;
-        text-shadow: none !important;
-    }}
     .helper-card {{
         margin-top: 18px;
-        background: rgba(247, 241, 230, 0.56);
-        border: 1px solid rgba(255,255,255,0.36);
+        background: rgba(247, 241, 230, 0.62);
+        border: 1px solid rgba(255,255,255,0.4);
         border-radius: 22px;
         padding: 18px 20px;
         backdrop-filter: blur(16px);
@@ -347,35 +353,38 @@ st.markdown(
         margin-top: 12px;
     }}
     .journal-tile {{
-        background: linear-gradient(180deg, rgba(14, 24, 35, 0.82), rgba(8, 14, 22, 0.9));
-        border: 1px solid rgba(255,255,255,0.12);
+        background: linear-gradient(180deg, rgba(248, 242, 231, 0.82), rgba(233, 223, 206, 0.72));
+        border: 1px solid rgba(255,255,255,0.38);
         border-radius: 24px;
         padding: 18px;
-        box-shadow: 0 18px 40px rgba(0,0,0,0.28);
+        box-shadow: 0 18px 40px rgba(0,0,0,0.12);
     }}
     .journal-meta {{
-        color: rgba(255,255,255,0.74) !important;
+        color: rgba(33, 58, 77, 0.72) !important;
         font-size: 14px;
         line-height: 1.7;
+        text-shadow: none !important;
     }}
     .journal-title {{
         font-size: 22px;
         font-weight: 700;
         margin-bottom: 8px;
-        color: #FFD166 !important;
+        color: #c96d2d !important;
         text-shadow: none !important;
     }}
     .journal-route {{
         font-size: 15px;
-        color: rgba(255,255,255,0.88) !important;
+        color: rgba(25, 50, 71, 0.88) !important;
         margin-top: 10px;
         line-height: 1.7;
+        text-shadow: none !important;
     }}
     .journal-summary {{
         font-size: 15px;
-        color: rgba(255,255,255,0.8) !important;
+        color: rgba(34, 56, 73, 0.84) !important;
         line-height: 1.8;
         margin-top: 8px;
+        text-shadow: none !important;
     }}
     .journal-detail-card {{
         background: linear-gradient(180deg, rgba(245, 239, 227, 0.98), rgba(239, 232, 216, 0.98));
@@ -404,47 +413,48 @@ st.markdown(
     section[data-testid="stSidebar"] h1,
     section[data-testid="stSidebar"] h2,
     section[data-testid="stSidebar"] h3 {{
-        color: white !important;
-        text-shadow: 0 2px 4px rgba(0,0,0,0.28) !important;
+        color: #17334a !important;
+        text-shadow: none !important;
     }}
     div[data-testid="stAlertContainer"] [data-testid="stAlert"] {{
-        background: rgba(10, 42, 72, 0.78) !important;
-        border: 1px solid rgba(255,255,255,0.08) !important;
-        color: #f4f9ff !important;
+        background: linear-gradient(180deg, rgba(247, 242, 232, 0.86), rgba(234, 226, 212, 0.78)) !important;
+        border: 1px solid rgba(255,255,255,0.44) !important;
+        color: #17334a !important;
         box-shadow: 0 14px 34px rgba(0,0,0,0.08);
+        backdrop-filter: blur(12px);
     }}
     div[data-testid="stAlertContainer"] [data-testid="stAlert"] * {{
-        color: #f4f9ff !important;
+        color: #17334a !important;
         text-shadow: none !important;
     }}
     div[data-testid="stTabs"] [role="tablist"] {{
         gap: 10px;
-        background: rgba(7, 29, 46, 0.22);
+        background: rgba(248, 241, 230, 0.3);
         border-radius: 20px;
         padding: 8px;
         backdrop-filter: blur(14px);
     }}
     div[data-testid="stTabs"] button[role="tab"] {{
         border-radius: 14px;
-        background: rgba(255, 255, 255, 0.12) !important;
-        color: #f7fbff !important;
-        border: 1px solid rgba(255,255,255,0.16) !important;
+        background: rgba(255, 249, 240, 0.46) !important;
+        color: #17334a !important;
+        border: 1px solid rgba(255,255,255,0.38) !important;
         padding: 10px 16px !important;
-        text-shadow: 0 2px 4px rgba(0,0,0,0.18) !important;
+        text-shadow: none !important;
     }}
     div[data-testid="stTabs"] button[role="tab"][aria-selected="true"] {{
-        background: linear-gradient(135deg, rgba(255, 214, 122, 0.72), rgba(244, 162, 97, 0.66)) !important;
-        color: #132c40 !important;
-        border-color: rgba(255,255,255,0.32) !important;
-        box-shadow: 0 10px 24px rgba(244, 162, 97, 0.12);
+        background: linear-gradient(135deg, rgba(255, 214, 122, 0.88), rgba(244, 162, 97, 0.84)) !important;
+        color: #17334a !important;
+        border-color: rgba(255,255,255,0.48) !important;
+        box-shadow: 0 10px 24px rgba(244, 162, 97, 0.16);
     }}
     div[data-testid="stTabs"] [data-baseweb="tab-panel"] {{
-        background: linear-gradient(180deg, rgba(7, 31, 49, 0.32), rgba(7, 31, 49, 0.18));
-        border: 1px solid rgba(255,255,255,0.12);
+        background: linear-gradient(180deg, rgba(248, 242, 231, 0.54), rgba(236, 227, 211, 0.42));
+        border: 1px solid rgba(255,255,255,0.3);
         border-radius: 24px;
         padding: 18px 18px 8px;
         backdrop-filter: blur(14px);
-        box-shadow: 0 16px 40px rgba(0,0,0,0.1);
+        box-shadow: 0 16px 40px rgba(0,0,0,0.08);
         margin-top: 14px;
     }}
     div[data-testid="stTabs"] [data-baseweb="tab-panel"] *,
@@ -453,18 +463,19 @@ st.markdown(
     div[data-testid="stTabs"] [data-baseweb="tab-panel"] p,
     div[data-testid="stTabs"] [data-baseweb="tab-panel"] span,
     div[data-testid="stTabs"] [data-baseweb="tab-panel"] div {{
-        color: #f6fbff !important;
-        text-shadow: 0 2px 4px rgba(0,0,0,0.24) !important;
+        color: #17334a !important;
+        text-shadow: none !important;
     }}
     div[data-testid="stTabs"] [data-baseweb="tab-panel"] .stCaption,
     div[data-testid="stTabs"] [data-baseweb="tab-panel"] [data-testid="stCaptionContainer"] * {{
-        color: rgba(243, 248, 252, 0.82) !important;
+        color: rgba(33, 58, 77, 0.82) !important;
         text-shadow: none !important;
     }}
     div[data-testid="stAudio"] {{
-        background: rgba(255, 255, 255, 0.12);
+        background: rgba(255, 247, 238, 0.26);
         border-radius: 18px;
         padding: 8px;
+        backdrop-filter: blur(12px);
     }}
     @media (max-width: 900px) {{
         .hero-card {{
