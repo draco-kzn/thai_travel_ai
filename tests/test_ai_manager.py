@@ -1,5 +1,7 @@
 import unittest
 from types import SimpleNamespace
+from pathlib import Path
+import shutil
 from unittest.mock import patch
 
 import ai_manager
@@ -65,6 +67,39 @@ class AIManagerTests(unittest.TestCase):
 
         self.assertEqual(len(fallback_images), 10)
         self.assertGreaterEqual(len(set(fallback_images.values())), 10)
+
+    def test_city_fallback_images_change_with_weather_and_time(self):
+        sunny_day = ai_manager.get_city_fallback_image("Krabi", "sunny", "noon")
+        rainy_day = ai_manager.get_city_fallback_image("Krabi", "rainy", "noon")
+        sunny_night = ai_manager.get_city_fallback_image("Krabi", "sunny", "night")
+
+        self.assertNotEqual(sunny_day, rainy_day)
+        self.assertNotEqual(sunny_day, sunny_night)
+
+    def test_local_wallpaper_image_is_used_when_present(self):
+        root = Path(__file__).resolve().parent / "_tmp_ai_manager"
+        if root.exists():
+            shutil.rmtree(root)
+
+        wallpapers = root / "wallpapers" / "bangkok"
+        wallpapers.mkdir(parents=True, exist_ok=True)
+        image_path = wallpapers / "sunny_noon.jpg"
+        image_path.write_bytes(b"fake-jpg-data")
+        manifest_path = root / "wallpapers" / "manifest.json"
+        manifest_path.write_text(
+            '{"Bangkok|sunny|noon": {"path": "wallpapers/bangkok/sunny_noon.jpg"}}',
+            encoding="utf-8",
+        )
+
+        with patch.object(ai_manager, "ROOT_DIR", root), patch.object(
+            ai_manager, "WALLPAPER_MANIFEST_PATH", manifest_path
+        ):
+            result = ai_manager.get_local_wallpaper_image("Bangkok", "sunny", "noon")
+
+        if root.exists():
+            shutil.rmtree(root)
+
+        self.assertTrue(result.startswith("data:image/jpeg;base64,"))
 
 
 if __name__ == "__main__":
